@@ -12,6 +12,6 @@ jobs:
           python-version: 3.x
       - run: pip install --upgrade pip
       - run: pip install black pylint mypy
-      - run: black --exclude="custom_components/berlin_transport/const.py" --diff --check $(git ls-files '*.py')
-      # - run: pylint --disable=all --enable=unused-import $(git ls-files '*.py')
+      - run: black --exclude="custom_components/berlin_transport/const.py" --diff
+      - run: pylint $(git ls-files '*.py')
       - run: mypy --install-types --non-interactive $(git ls-files '*.py')
