@@ -3,12 +3,14 @@ from datetime import timedelta
 DOMAIN = "berlin_transport"
 SCAN_INTERVAL = timedelta(seconds=90)
 API_ENDPOINT = "https://v5.vbb.transport.rest"
+API_MAX_RESULTS = 15
 
 DEFAULT_ICON = "mdi:clock"
 
 CONF_DEPARTURES = "departures"
 CONF_DEPARTURES_NAME = "name"
 CONF_DEPARTURES_STOP_ID = "stop_id"
+CONF_DEPARTURES_WALKING_DISTANCE = "walking_distance"
 CONF_DEPARTURES_DIRECTION = "direction"
 CONF_TYPE_SUBURBAN = "suburban"
 CONF_TYPE_SUBWAY = "subway"

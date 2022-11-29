@@ -41,6 +41,8 @@ sensor:
         stop_id: 900110001 # actual Stop ID for the API
       - name: "Stargarder Str." # you can add more that one stop to track
         stop_id: 900000110501
+        # direction: "S Hackescher Markt" # optional: filter out lines by direction
+        # walking_distance: 5 # optional (minutes): hide transport closer than N minutes
 ```
 
     4.  Restart Home Assistant core again and you should now see two new entities (however, it may take some time for them to fetch new data). If you don't see anything new — check the logs (Settings -> System -> Logs). Some error should pop up there.

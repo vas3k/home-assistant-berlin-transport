@@ -2,22 +2,25 @@
 from __future__ import annotations
 import logging
 
-from typing import Optional
-import voluptuous as vol
 import requests
+import voluptuous as vol
+from typing import Optional
+from datetime import datetime, timedelta
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import PLATFORM_SCHEMA
-from .const import (  # pylint: disable=unused-import
+from .const import (
     DOMAIN,  # noqa
     SCAN_INTERVAL,  # noqa
     API_ENDPOINT,
+    API_MAX_RESULTS,
     CONF_DEPARTURES,
     CONF_DEPARTURES_DIRECTION,
     CONF_DEPARTURES_STOP_ID,
+    CONF_DEPARTURES_WALKING_DISTANCE,
     CONF_TYPE_BUS,
     CONF_TYPE_EXPRESS,
     CONF_TYPE_FERRY,
@@ -48,7 +51,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
             {
                 vol.Required(CONF_DEPARTURES_NAME): str,
                 vol.Required(CONF_DEPARTURES_STOP_ID): int,
-                vol.Optional(CONF_DEPARTURES_DIRECTION): int,
+                vol.Optional(CONF_DEPARTURES_DIRECTION): str,
+                vol.Optional(CONF_DEPARTURES_WALKING_DISTANCE, default=1): int,
                 **TRANSPORT_TYPES_SCHEMA,
             }
         ]
@@ -60,7 +64,7 @@ async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
     add_entities: AddEntitiesCallback,
-    _: DiscoveryInfoType | None = None
+    discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the sensor platform."""
     if CONF_DEPARTURES in config:
@@ -71,13 +75,14 @@ async def async_setup_platform(
 class TransportSensor(SensorEntity):
     departures: list[Departure] = []
 
-    def __init__(self, hass, config) -> None:
-        self.hass = hass
-        self.config = config
-        self.stop_id = config[CONF_DEPARTURES_STOP_ID]
-        self.sensor_name = config.get(CONF_DEPARTURES_NAME)
-        self.direction = config.get(CONF_DEPARTURES_DIRECTION)
-        self.max_results = 10
+    def __init__(self, hass: HomeAssistant, config: dict) -> None:
+        self.hass: HomeAssistant = hass
+        self.config: dict = config
+        self.stop_id: int = config[CONF_DEPARTURES_STOP_ID]
+        self.sensor_name: str | None = config.get(CONF_DEPARTURES_NAME)
+        self.direction: str | None = config.get(CONF_DEPARTURES_DIRECTION)
+        self.walking_distance: int = config.get(CONF_DEPARTURES_WALKING_DISTANCE) or 1
+        # we add +1 minute anyway to delete the "just gone" transport
 
     @property
     def name(self) -> str:
@@ -115,8 +120,11 @@ class TransportSensor(SensorEntity):
             response = requests.get(
                 url=f"{API_ENDPOINT}/stops/{self.stop_id}/departures",
                 params={
+                    "when": (
+                        datetime.utcnow() + timedelta(minutes=self.walking_distance)
+                    ).isoformat(),
                     "direction": self.direction,
-                    "results": self.max_results,
+                    "results": API_MAX_RESULTS,
                     "suburban": self.config.get(CONF_TYPE_SUBURBAN) or False,
                     "subway": self.config.get(CONF_TYPE_SUBWAY) or False,
                     "tram": self.config.get(CONF_TYPE_TRAM) or False,
