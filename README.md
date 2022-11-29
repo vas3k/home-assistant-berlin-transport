@@ -4,7 +4,7 @@ Custom sensor component and lovelace card that displays upcoming departures from
 
 ![](./docs/screenshots/timetable-card.jpg)
 
-## 💿 Installation and configuration
+## 💿 Installation
 
 The component consists of two parts:
 
@@ -23,15 +23,16 @@ Replace `alexanderplatz` with the name of your own stop.
 
 ![](./docs/screenshots/stop-id-api.jpg)
 
-> 🧐 **Pro tip:** You can also use their [location-based API](https://v5.vbb.transport.rest/api.html#get-stopsnearby) to find all stops nearby using your GPS coordinates.
+> 🧐 **Pro tip:**
+> You can also use their [location-based API](https://v5.vbb.transport.rest/api.html#get-stopsnearby) to find all stops nearby using your GPS coordinates.
 
 ### Installing sensor component
 
-    1.  Copy `[custom_components/berlin_transport](./custom_components/)` directory to the `custom_components` folder of your Home Assistant installation (same place where `configuration.yml` lives). If the `custom_components` folder does not exist, create it.
+**1.** Copy `[custom_components/berlin_transport](./custom_components/)` directory to the `custom_components` folder of your Home Assistant installation (same place where `configuration.yml` lives). If the `custom_components` folder does not exist, create it.
 
-    2.  Go to Home Assistant web interface -> Developer Tools -> Check and Restart and click "Restart" button. It will reload all components in the system.
+**2.** Go to Home Assistant web interface -> Developer Tools -> Check and Restart and click "Restart" button. It will reload all components in the system.
 
-    3.  Now you can add your new custom sensor to the corresponding section in the `configuration.yml` file.
+**3.** Now you can add your new custom sensor to the corresponding section in the `configuration.yml` file.
 
 ```yaml
 sensor:
@@ -45,19 +46,19 @@ sensor:
         # walking_distance: 5 # optional (minutes): hide transport closer than N minutes
 ```
 
-    4.  Restart Home Assistant core again and you should now see two new entities (however, it may take some time for them to fetch new data). If you don't see anything new — check the logs (Settings -> System -> Logs). Some error should pop up there.
+**4.** Restart Home Assistant core again and you should now see two new entities (however, it may take some time for them to fetch new data). If you don't see anything new — check the logs (Settings -> System -> Logs). Some error should pop up there.
 
 ### Adding the lovelace card
 
 When sensor component is installed and working you can add the new fancy widget for your dashboard.
 
-    1. Copy `[www/berlin-transport-timetable-card.js](./www)` to the `www` directory of your Home Assistant. The same way you did for the sensor above. If it doesn't exist — create one.
+**1.** Copy `[www/berlin-transport-timetable-card.js](./www)` to the `www` directory of your Home Assistant. The same way you did for the sensor above. If it doesn't exist — create one.
 
-    2. Go to your Home Assistant dashboard, click "Edit dashboard" at the right top corner and after that in the same top right corner choose "Manage resources".
+**2.** Go to your Home Assistant dashboard, click "Edit dashboard" at the right top corner and after that in the same top right corner choose "Manage resources".
 
-    3. Add new resource with URL: `/local/berlin-transport-timetable-card.js` and click create. Go back to your dashboard and refresh the page.
+**3.** Add new resource with URL: `/local/berlin-transport-timetable-card.js` and click create. Go back to your dashboard and refresh the page.
 
-    4. Now you can add the custom card and integrate it with your sensor. Click "Add card -> Manual" or just go to "Raw configuration editor" and use this config.
+**4.** Now you can add the custom card and integrate it with your sensor. Click "Add card -> Manual" or just go to "Raw configuration editor" and use this config.
 
 ```yaml
 - type: custom:berlin-transport-timetable-card
@@ -86,7 +87,8 @@ The VBB API is a bit unstable (as you can guess), so sometimes it gives random 5
 
 After fetching the API, it creates one entity for each stop and writes 10 upcoming departures into `attributes.departures`. The entity state is not really used anywhere, it just shows the next departure in a human-readable format. If you have any ideas how to use it better — welcome to Github Issues.
 
-> 🤔 In principle, the HAFAS format is standardized in many other cities too, so you should have no problem adapting this component to more places if you wish. Check out [transport.rest](https://transport.rest/) for an inspiration.
+> 🤔
+> In principle, the HAFAS format is standardized in many other cities too, so you should have no problem adapting this component to more places if you wish. Check out [transport.rest](https://transport.rest/) for an inspiration.
 
 ## ❤️ Contributions
 
