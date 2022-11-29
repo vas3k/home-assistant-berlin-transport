@@ -28,7 +28,7 @@ Replace `alexanderplatz` with the name of your own stop.
 
 ### Installing sensor component
 
-**1.** Copy `[custom_components/berlin_transport](./custom_components/)` directory to the `custom_components` folder of your Home Assistant installation (same place where `configuration.yml` lives). If the `custom_components` folder does not exist, create it.
+**1.** Copy [custom_components/berlin_transport](./custom_components/) directory to the `custom_components` folder of your Home Assistant installation (same place where `configuration.yml` lives). If the `custom_components` folder does not exist, create it.
 
 **2.** Go to Home Assistant web interface -> Developer Tools -> Check and Restart and click "Restart" button. It will reload all components in the system.
 
@@ -52,7 +52,7 @@ sensor:
 
 When sensor component is installed and working you can add the new fancy widget for your dashboard.
 
-**1.** Copy `[www/berlin-transport-timetable-card.js](./www)` to the `www` directory of your Home Assistant. The same way you did for the sensor above. If it doesn't exist — create one.
+**1.** Copy the [www/berlin-transport-timetable-card.js](./www) card module to the `www` directory of your Home Assistant. The same way you did for the sensor above. If it doesn't exist — create one.
 
 **2.** Go to your Home Assistant dashboard, click "Edit dashboard" at the right top corner and after that in the same top right corner choose "Manage resources".
 
