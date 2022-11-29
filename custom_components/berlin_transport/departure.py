@@ -6,7 +6,8 @@ from .const import TRANSPORT_TYPE_VISUALS, DEFAULT_ICON
 
 @dataclass
 class Departure:
-    """Departure dataclass to store data from API: https://v5.vbb.transport.rest/api.html#get-stopsiddepartures"""
+    """Departure dataclass to store data from API: 
+    https://v5.vbb.transport.rest/api.html#get-stopsiddepartures"""
 
     trip_id: str
     line_name: str
@@ -25,7 +26,9 @@ class Departure:
             trip_id=source["tripId"],
             line_name=source.get("line", {}).get("name"),
             line_type=source.get("line", {}).get("product"),
-            time=datetime.fromisoformat(source.get("when") or source.get("plannedWhen")).strftime("%H:%M"),
+            time=datetime.fromisoformat(
+                source.get("when") or source.get("plannedWhen")
+            ).strftime("%H:%M"),
             direction=source.get("direction"),
             icon=line_visuals["icon"] if line_visuals else DEFAULT_ICON,
             color=line_visuals["color"]

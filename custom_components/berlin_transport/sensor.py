@@ -1,18 +1,18 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 from __future__ import annotations
 import logging
+from typing import Optional
+from datetime import datetime, timedelta
 
 import requests
 import voluptuous as vol
-from typing import Optional
-from datetime import datetime, timedelta
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import PLATFORM_SCHEMA
-from .const import (
+from .const import (  # pylint: disable=unused-import
     DOMAIN,  # noqa
     SCAN_INTERVAL,  # noqa
     API_ENDPOINT,
@@ -64,7 +64,7 @@ async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
     add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
+    _: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the sensor platform."""
     if CONF_DEPARTURES in config:
