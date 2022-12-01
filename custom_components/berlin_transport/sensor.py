@@ -20,7 +20,7 @@ from .const import (  # pylint: disable=unused-import
     CONF_DEPARTURES,
     CONF_DEPARTURES_DIRECTION,
     CONF_DEPARTURES_STOP_ID,
-    CONF_DEPARTURES_WALKING_DISTANCE,
+    CONF_DEPARTURES_WALKING_TIME,
     CONF_TYPE_BUS,
     CONF_TYPE_EXPRESS,
     CONF_TYPE_FERRY,
@@ -52,7 +52,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
                 vol.Required(CONF_DEPARTURES_NAME): str,
                 vol.Required(CONF_DEPARTURES_STOP_ID): int,
                 vol.Optional(CONF_DEPARTURES_DIRECTION): str,
-                vol.Optional(CONF_DEPARTURES_WALKING_DISTANCE, default=1): int,
+                vol.Optional(CONF_DEPARTURES_WALKING_TIME, default=1): int,
                 **TRANSPORT_TYPES_SCHEMA,
             }
         ]
@@ -81,7 +81,7 @@ class TransportSensor(SensorEntity):
         self.stop_id: int = config[CONF_DEPARTURES_STOP_ID]
         self.sensor_name: str | None = config.get(CONF_DEPARTURES_NAME)
         self.direction: str | None = config.get(CONF_DEPARTURES_DIRECTION)
-        self.walking_distance: int = config.get(CONF_DEPARTURES_WALKING_DISTANCE) or 1
+        self.walking_time: int = config.get(CONF_DEPARTURES_WALKING_TIME) or 1
         # we add +1 minute anyway to delete the "just gone" transport
 
     @property
@@ -121,7 +121,7 @@ class TransportSensor(SensorEntity):
                 url=f"{API_ENDPOINT}/stops/{self.stop_id}/departures",
                 params={
                     "when": (
-                        datetime.utcnow() + timedelta(minutes=self.walking_distance)
+                        datetime.utcnow() + timedelta(minutes=self.walking_time)
                     ).isoformat(),
                     "direction": self.direction,
                     "results": API_MAX_RESULTS,
