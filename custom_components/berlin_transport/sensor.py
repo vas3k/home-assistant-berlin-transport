@@ -51,7 +51,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
             {
                 vol.Required(CONF_DEPARTURES_NAME): str,
                 vol.Required(CONF_DEPARTURES_STOP_ID): int,
-                vol.Optional(CONF_DEPARTURES_DIRECTION): str,
+                vol.Optional(CONF_DEPARTURES_DIRECTION): int,
                 vol.Optional(CONF_DEPARTURES_WALKING_TIME, default=1): int,
                 **TRANSPORT_TYPES_SCHEMA,
             }
@@ -80,7 +80,7 @@ class TransportSensor(SensorEntity):
         self.config: dict = config
         self.stop_id: int = config[CONF_DEPARTURES_STOP_ID]
         self.sensor_name: str | None = config.get(CONF_DEPARTURES_NAME)
-        self.direction: str | None = config.get(CONF_DEPARTURES_DIRECTION)
+        self.direction: int | None = config.get(CONF_DEPARTURES_DIRECTION)
         self.walking_time: int = config.get(CONF_DEPARTURES_WALKING_TIME) or 1
         # we add +1 minute anyway to delete the "just gone" transport
 
@@ -97,7 +97,7 @@ class TransportSensor(SensorEntity):
 
     @property
     def unique_id(self) -> str:
-        return f"stop_{self.stop_id}_departures"
+        return f"stop_{self.stop_id}_{self.sensor_name}_departures"
 
     @property
     def state(self) -> str:
