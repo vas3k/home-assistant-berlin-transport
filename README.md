@@ -44,8 +44,15 @@ sensor:
         stop_id: 900110001 # actual Stop ID for the API
       - name: "Stargarder Str." # you can add more that one stop to track
         stop_id: 900000110501
-        # direction: "S Hackescher Markt" # optional: filter out lines by direction
-        # walking_time: 5 # optional (minutes): hide transport closer than N minutes
+        
+        # Optional parameter that filter out sensor stop direction by setting stop_id 
+        # of any stop on a desired route.
+        # stop_id can be found via the similar request:
+        # [curl https://v5.vbb.transport.rest/locations\?query\=S+Hackescher+Markt | jq]
+        # direction: 900000100002
+        
+        # Optional parameter with value in minutes that hide transport closer than N minutes
+        # walking_time: 5
 ```
 
 **4.** Restart Home Assistant core again and you should now see two new entities (however, it may take some time for them to fetch new data). If you don't see anything new — check the logs (Settings -> System -> Logs). Some error should pop up there.
@@ -70,6 +77,9 @@ When sensor component is installed and working you can add the new fancy widget 
     - sensor.stop_id_900110001 # use your entity IDs here
     - sensor.stargarder_str # they might be different from mine
 ```
+
+## 🚨 Update
+This update brings new sensor id generation. It will result in deactivation of sensors with the old ids. All of those inactive sensors can be manually deleted either from the lovelace card directly and refreshing the dashboard or from the entities list in `Settings`.
 
 ## 🎨 Styling
 
