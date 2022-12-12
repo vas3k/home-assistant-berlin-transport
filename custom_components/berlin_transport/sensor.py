@@ -153,7 +153,8 @@ class TransportSensor(SensorEntity):
             return []
 
         # convert api data into objects
-        return sorted([Departure.from_dict(departure) for departure in departures], key=lambda d: d.time)
+        unsorted = [Departure.from_dict(departure) for departure in departures]
+        return sorted(unsorted, key=lambda d: d.time)
 
     def next_departure(self):
         if self.departures and isinstance(self.departures, list):
