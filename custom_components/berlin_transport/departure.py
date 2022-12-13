@@ -12,6 +12,7 @@ class Departure:
     trip_id: str
     line_name: str
     line_type: str
+    timestamp: datetime
     time: datetime
     direction: str | None = None
     icon: str | None = None
@@ -23,13 +24,13 @@ class Departure:
     def from_dict(cls, source):
         line_type = source.get("line", {}).get("product")
         line_visuals = TRANSPORT_TYPE_VISUALS.get(line_type) or {}
+        timestamp=datetime.fromisoformat(source.get("when") or source.get("plannedWhen"))
         return cls(
             trip_id=source["tripId"],
             line_name=source.get("line", {}).get("name"),
             line_type=line_type,
-            time=datetime.fromisoformat(
-                source.get("when") or source.get("plannedWhen")
-            ).strftime("%H:%M"),
+            timestamp=timestamp,
+            time=timestamp.strftime("%H:%M"),
             direction=source.get("direction"),
             icon=line_visuals.get("icon") or DEFAULT_ICON,
             bg_color=source.get("line", {}).get("color", {}).get("bg"),
