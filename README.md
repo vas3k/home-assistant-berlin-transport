@@ -44,7 +44,7 @@ sensor:
         stop_id: 900110001 # actual Stop ID for the API
         # direction: 900000100002 # Optional stop_id to limit departures for a specific direction (same URL as to find the stop_id)
         # walking_time: 5 # Optional parameter with value in minutes that hides transport closer than N minutes
-      - name: "Stargarder Str." # you can add more than one stop to track
+      - name: "Stargarder Str." # currently you have to add more than one stop to track
         stop_id: 900000110501
         # direction: 900000100002 # Optional stop_id to limit departures for a specific direction (same URL as to find the stop_id)
         # walking_time: 5 # Optional parameter with value in minutes that hide transport closer than N minutes
