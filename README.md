@@ -71,6 +71,7 @@ When sensor component is installed and working you can add the new fancy widget 
   entities:
     - sensor.stop_id_900110001 # use your entity IDs here
     - sensor.stargarder_str # they might be different from mine
+  show_cancelled: true # show or hide the cancelled departures. When not defined or true, the cancelled departures will be shown as struk-through.
 ```
 
 ## 🚨 Update
