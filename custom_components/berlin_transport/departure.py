@@ -22,19 +22,22 @@ class Departure:
 
     @classmethod
     def from_dict(cls, source):
-        line_type = source.get("line", {}).get("product")
+        line_desc = source.get("line", {})
+        line_type = line_desc.get("product")
+        line_name = line_desc.get("name")
         line_visuals = TRANSPORT_TYPE_VISUALS.get(line_type) or {}
+        line_color = line_visuals.get("line_colors").get(line_name)
         timestamp=datetime.fromisoformat(source.get("when") or source.get("plannedWhen"))
         return cls(
             trip_id=source["tripId"],
-            line_name=source.get("line", {}).get("name"),
+            line_name=line_name,
             line_type=line_type,
             timestamp=timestamp,
             time=timestamp.strftime("%H:%M"),
             direction=source.get("direction"),
             icon=line_visuals.get("icon") or DEFAULT_ICON,
-            bg_color=source.get("line", {}).get("color", {}).get("bg"),
-            fallback_color=line_visuals.get("color"),
+            bg_color=line_color,
+            fallback_color=line_visuals.get("product_color"),
             location=[
                 source.get("currentTripPosition", {}).get("latitude") or 0.0,
                 source.get("currentTripPosition", {}).get("longitude") or 0.0,
@@ -47,5 +50,5 @@ class Departure:
             "line_type": self.line_type,
             "time": self.time,
             "direction": self.direction,
-            "color": self.fallback_color or self.bg_color,
+            "color": self.bg_color or self.fallback_color,
         }
