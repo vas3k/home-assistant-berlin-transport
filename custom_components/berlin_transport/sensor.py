@@ -112,7 +112,9 @@ class TransportSensor(SensorEntity):
     @property
     def extra_state_attributes(self):
         return {
-            "departures": [departure.to_dict(self.show_api_line_colors) for departure in self.departures or []]
+            "departures": [
+                departure.to_dict(self.show_api_line_colors) for departure in self.departures or []
+            ]
         }
 
     def update(self):
