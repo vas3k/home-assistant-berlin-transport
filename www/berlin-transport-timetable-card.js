@@ -13,8 +13,9 @@ class BerlinTransportTimetableCard extends HTMLElement {
 
         const config = this.config;
         const maxEntries = config.max_entries || 10;
-        const showStopName = config.show_stop_name || true;
+        const showStopName = config.show_stop_name || (config.show_stop_name === undefined);
         const entityIds = config.entity ? [config.entity] : config.entities || [];
+        const show_cancelled = config.show_cancelled || (config.show_cancelled === undefined);
 
         let content = "";
 
@@ -29,7 +30,8 @@ class BerlinTransportTimetableCard extends HTMLElement {
             }
 
             const timetable = entity.attributes.departures.slice(0, maxEntries).map((departure) => 
-                `<div class="departure">
+                departure.cancelled && !show_cancelled ? `` :
+                `<div class="${departure.cancelled ? 'departure-cancelled' : 'departure'}">
                     <div class="line">
                         <div class="line-icon" style="background-color: ${departure.color}">${departure.line_name}</div>
                     </div>
@@ -75,6 +77,16 @@ class BerlinTransportTimetableCard extends HTMLElement {
                 padding-bottom: 20px;
             }
             .departure {
+                padding-top: 10px;
+                display: flex;
+                flex-direction: row;
+                flex-wrap: nowrap;
+                align-items: flex-start;
+                gap: 20px;
+            }
+            .departure-cancelled {
+                text-decoration: line-through;
+                filter: grayscale(50%);
                 padding-top: 10px;
                 display: flex;
                 flex-direction: row;
