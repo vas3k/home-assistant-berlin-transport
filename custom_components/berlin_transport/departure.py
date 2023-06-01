@@ -7,7 +7,7 @@ from .const import TRANSPORT_TYPE_VISUALS, DEFAULT_ICON
 @dataclass
 class Departure:
     """Departure dataclass to store data from API:
-    https://v5.vbb.transport.rest/api.html#get-stopsiddepartures"""
+    https://v6.vbb.transport.rest/api.html#get-stopsiddepartures"""
 
     trip_id: str
     line_name: str

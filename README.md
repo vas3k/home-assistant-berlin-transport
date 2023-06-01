@@ -10,7 +10,7 @@ Custom sensor component and lovelace card that displays upcoming departures from
 
 The component consists of two parts:
 
-1. A sensor, which tracks departures via [VBB public API](https://v5.vbb.transport.rest/api.html#get-stopsiddepartures) every 90 seconds
+1. A sensor, which tracks departures via [VBB public API](https://v6.vbb.transport.rest/api.html#get-stopsiddepartures) every 90 seconds
 2. A widget (card) for the lovelace dashboard, which displays upcoming transport in a nice way
 
 We will look at the installation of each of them separately below. But first, let's learn how to find the Stop IDs.
@@ -19,14 +19,14 @@ We will look at the installation of each of them separately below. But first, le
 
 Unfortunately, I didn't have time to figure out a proper user-friendly approach of adding new components to Home Assistant, so you will have to do some routine work of finding the IDs of the nearest transport stops to you. Sorry about that :)
 
-Simply use this URL: **https://v5.vbb.transport.rest/locations?results=1&query=alexanderplatz**
+Simply use this URL: **https://v6.vbb.transport.rest/locations?results=1&query=alexanderplatz**
 
 Replace `alexanderplatz` with the name of your own stop.
 
 ![](./docs/screenshots/stop-id-api.jpg)
 
 > 🧐 **Pro tip:**
-> You can also use their [location-based API](https://v5.vbb.transport.rest/api.html#get-stopsnearby) to find all stops nearby using your GPS coordinates.
+> You can also use their [location-based API](https://v6.vbb.transport.rest/api.html#get-stopsnearby) to find all stops nearby using your GPS coordinates.
 
 ### Install sensor component
 
