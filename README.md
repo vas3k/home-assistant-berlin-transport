@@ -19,7 +19,7 @@ We will look at the installation of each of them separately below. But first, le
 
 Unfortunately, I didn't have time to figure out a proper user-friendly approach of adding new components to Home Assistant, so you will have to do some routine work of finding the IDs of the nearest transport stops to you. Sorry about that :)
 
-Simply use this URL: **https://v5.vbb.transport.rest/locations?results=1&query=alexanderplatz**
+Simply use this URL: **https://v6.vbb.transport.rest/locations?results=1&query=alexanderplatz**
 
 Replace `alexanderplatz` with the name of your own stop.
 
