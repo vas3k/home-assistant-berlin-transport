@@ -2,7 +2,7 @@ from datetime import timedelta
 
 DOMAIN = "berlin_transport"
 SCAN_INTERVAL = timedelta(seconds=90)
-API_ENDPOINT = "https://v5.vbb.transport.rest"
+API_ENDPOINT = "https://v6.vbb.transport.rest"
 API_MAX_RESULTS = 15
 
 DEFAULT_ICON = "mdi:clock"
