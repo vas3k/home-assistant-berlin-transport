@@ -43,12 +43,15 @@ class Departure:
             cancelled=source.get("cancelled", False),
         )
 
-    def to_dict(self):
+    def to_dict(self, show_api_line_colors:bool):
+        color = self.fallback_color
+        if show_api_line_colors and self.bg_color is not None:
+            color = self.bg_color
         return {
             "line_name": self.line_name,
             "line_type": self.line_type,
             "time": self.time,
             "direction": self.direction,
-            "color": self.fallback_color or self.bg_color,
+            "color": color,
             "cancelled": self.cancelled,
         }

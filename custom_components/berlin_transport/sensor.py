@@ -21,6 +21,7 @@ from .const import (  # pylint: disable=unused-import
     CONF_DEPARTURES_DIRECTION,
     CONF_DEPARTURES_STOP_ID,
     CONF_DEPARTURES_WALKING_TIME,
+    CONF_SHOW_API_LINE_COLORS,
     CONF_TYPE_BUS,
     CONF_TYPE_EXPRESS,
     CONF_TYPE_FERRY,
@@ -53,6 +54,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
                 vol.Required(CONF_DEPARTURES_STOP_ID): int,
                 vol.Optional(CONF_DEPARTURES_DIRECTION): int,
                 vol.Optional(CONF_DEPARTURES_WALKING_TIME, default=1): int,
+                vol.Optional(CONF_SHOW_API_LINE_COLORS, default=False): bool,
                 **TRANSPORT_TYPES_SCHEMA,
             }
         ]
@@ -83,6 +85,7 @@ class TransportSensor(SensorEntity):
         self.direction: int | None = config.get(CONF_DEPARTURES_DIRECTION)
         self.walking_time: int = config.get(CONF_DEPARTURES_WALKING_TIME) or 1
         # we add +1 minute anyway to delete the "just gone" transport
+        self.show_api_line_colors: bool = config.get(CONF_SHOW_API_LINE_COLORS) or False
 
     @property
     def name(self) -> str:
@@ -109,7 +112,9 @@ class TransportSensor(SensorEntity):
     @property
     def extra_state_attributes(self):
         return {
-            "departures": [departure.to_dict() for departure in self.departures or []]
+            "departures": [
+                departure.to_dict(self.show_api_line_colors) for departure in self.departures or []
+            ]
         }
 
     def update(self):
