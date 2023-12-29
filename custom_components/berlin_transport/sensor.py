@@ -19,6 +19,7 @@ from .const import (  # pylint: disable=unused-import
     API_MAX_RESULTS,
     CONF_DEPARTURES,
     CONF_DEPARTURES_DIRECTION,
+    CONF_DEPARTURES_DURATION,
     CONF_DEPARTURES_STOP_ID,
     CONF_DEPARTURES_WALKING_TIME,
     CONF_SHOW_API_LINE_COLORS,
@@ -53,6 +54,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
                 vol.Required(CONF_DEPARTURES_NAME): str,
                 vol.Required(CONF_DEPARTURES_STOP_ID): int,
                 vol.Optional(CONF_DEPARTURES_DIRECTION): int,
+                vol.Optional(CONF_DEPARTURES_DURATION): int,
                 vol.Optional(CONF_DEPARTURES_WALKING_TIME, default=1): int,
                 vol.Optional(CONF_SHOW_API_LINE_COLORS, default=False): bool,
                 **TRANSPORT_TYPES_SCHEMA,
@@ -83,6 +85,7 @@ class TransportSensor(SensorEntity):
         self.stop_id: int = config[CONF_DEPARTURES_STOP_ID]
         self.sensor_name: str | None = config.get(CONF_DEPARTURES_NAME)
         self.direction: int | None = config.get(CONF_DEPARTURES_DIRECTION)
+        self.duration: int | None = config.get(CONF_DEPARTURES_DURATION)
         self.walking_time: int = config.get(CONF_DEPARTURES_WALKING_TIME) or 1
         # we add +1 minute anyway to delete the "just gone" transport
         self.show_api_line_colors: bool = config.get(CONF_SHOW_API_LINE_COLORS) or False
@@ -129,6 +132,7 @@ class TransportSensor(SensorEntity):
                         datetime.utcnow() + timedelta(minutes=self.walking_time)
                     ).isoformat(),
                     "direction": self.direction,
+                    "duration": self.duration,
                     "results": API_MAX_RESULTS,
                     "suburban": self.config.get(CONF_TYPE_SUBURBAN) or False,
                     "subway": self.config.get(CONF_TYPE_SUBWAY) or False,
