@@ -1,14 +1,16 @@
 {
   "domain": "berlin_transport",
   "name": "Berlin (BVG) and Brandenburg (VBB) transport",
+  "codeowners": ["@vas3k"],
   "config_flow": true,
   "documentation": "https://github.com/vas3k/home-assistant-berlin-transport",
+  "issue_tracker": "https://github.com/vas3k/home-assistant-berlin-transport/issues",
   "requirements": [],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
   "dependencies": [],
-  "codeowners": ["@vas3k"],
+  "integration_type": "service",
   "iot_class": "cloud_polling",
   "version": "0.1.0"
 }
