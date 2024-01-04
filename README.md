@@ -60,7 +60,7 @@ sensor:
 
 When sensor component is installed and working you can add the new fancy widget for your dashboard.
 
-**1.** Copy the [berlin-transport-timetable-card.js](./www) card module to the `www` directory of your Home Assistant. The same way you did for the sensor above. If it doesn't exist — create one.
+**1.** Copy the [berlin-transport-timetable-card.js](./dist) card module to the `www` directory of your Home Assistant. The same way you did for the sensor above. If it doesn't exist — create one.
 
 **2.** Go to your Home Assistant dashboard, click "Edit dashboard" at the right top corner and after that in the same top right corner choose "Manage resources".
 
