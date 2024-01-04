@@ -2,7 +2,7 @@
   "domain": "berlin_transport",
   "name": "Berlin (BVG) and Brandenburg (VBB) transport",
   "codeowners": ["@vas3k"],
-  "config_flow": false,
+  "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/vas3k/home-assistant-berlin-transport",
   "homekit": {},

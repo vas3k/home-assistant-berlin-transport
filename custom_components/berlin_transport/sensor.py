@@ -10,6 +10,7 @@ import voluptuous as vol
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from .const import (  # pylint: disable=unused-import
@@ -63,17 +64,26 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
+# IPv6 is broken, see: https://github.com/public-transport/transport.rest/issues/20
+requests.packages.urllib3.util.connection.HAS_IPV6 = False
 
 async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
-    add_entities: AddEntitiesCallback,
+    async_add_entities: AddEntitiesCallback,
     _: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the sensor platform."""
     if CONF_DEPARTURES in config:
         for departure in config[CONF_DEPARTURES]:
-            add_entities([TransportSensor(hass, departure)])
+            async_add_entities([TransportSensor(hass, departure)])
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback
+) -> None:
+    async_add_entities([TransportSensor(hass, config_entry.data)])
 
 
 class TransportSensor(SensorEntity):
