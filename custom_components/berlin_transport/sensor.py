@@ -10,11 +10,13 @@ import requests
 import voluptuous as vol
 
 from homeassistant.core import HomeAssistant
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import PLATFORM_SCHEMA
+
 from .const import (  # pylint: disable=unused-import
     DOMAIN,  # noqa
     SCAN_INTERVAL,  # noqa
@@ -41,25 +43,25 @@ from .departure import Departure
 _LOGGER = logging.getLogger(__name__)
 
 TRANSPORT_TYPES_SCHEMA = {
-    vol.Optional(CONF_TYPE_SUBURBAN, default=True): bool,
-    vol.Optional(CONF_TYPE_SUBWAY, default=True): bool,
-    vol.Optional(CONF_TYPE_TRAM, default=True): bool,
-    vol.Optional(CONF_TYPE_BUS, default=True): bool,
-    vol.Optional(CONF_TYPE_FERRY, default=True): bool,
-    vol.Optional(CONF_TYPE_EXPRESS, default=True): bool,
-    vol.Optional(CONF_TYPE_REGIONAL, default=True): bool,
+    vol.Optional(CONF_TYPE_SUBURBAN, default=True): cv.boolean,
+    vol.Optional(CONF_TYPE_SUBWAY, default=True): cv.boolean,
+    vol.Optional(CONF_TYPE_TRAM, default=True): cv.boolean,
+    vol.Optional(CONF_TYPE_BUS, default=True): cv.boolean,
+    vol.Optional(CONF_TYPE_FERRY, default=True): cv.boolean,
+    vol.Optional(CONF_TYPE_EXPRESS, default=True): cv.boolean,
+    vol.Optional(CONF_TYPE_REGIONAL, default=True): cv.boolean,
 }
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Optional(CONF_DEPARTURES): [
             {
-                vol.Required(CONF_DEPARTURES_NAME): str,
-                vol.Required(CONF_DEPARTURES_STOP_ID): int,
-                vol.Optional(CONF_DEPARTURES_DIRECTION): int,
-                vol.Optional(CONF_DEPARTURES_DURATION): int,
-                vol.Optional(CONF_DEPARTURES_WALKING_TIME, default=1): int,
-                vol.Optional(CONF_SHOW_API_LINE_COLORS, default=False): bool,
+                vol.Required(CONF_DEPARTURES_NAME): cv.string,
+                vol.Required(CONF_DEPARTURES_STOP_ID): cv.positive_int,
+                vol.Optional(CONF_DEPARTURES_DIRECTION): cv.string,
+                vol.Optional(CONF_DEPARTURES_DURATION): cv.positive_int,
+                vol.Optional(CONF_DEPARTURES_WALKING_TIME, default=1): cv.positive_int,
+                vol.Optional(CONF_SHOW_API_LINE_COLORS, default=False): cv.boolean,
                 **TRANSPORT_TYPES_SCHEMA,
             }
         ]
@@ -98,7 +100,7 @@ class TransportSensor(SensorEntity):
         self.config: dict = config
         self.stop_id: int = config[CONF_DEPARTURES_STOP_ID]
         self.sensor_name: str | None = config.get(CONF_DEPARTURES_NAME)
-        self.direction: int | None = config.get(CONF_DEPARTURES_DIRECTION)
+        self.direction: str | None = config.get(CONF_DEPARTURES_DIRECTION)
         self.duration: int | None = config.get(CONF_DEPARTURES_DURATION)
         self.walking_time: int = config.get(CONF_DEPARTURES_WALKING_TIME) or 1
         # we add +1 minute anyway to delete the "just gone" transport
