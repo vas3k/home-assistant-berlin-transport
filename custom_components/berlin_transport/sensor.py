@@ -1,3 +1,5 @@
+# mypy: disable-error-code="attr-defined"
+
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 from __future__ import annotations
 import logging
@@ -67,6 +69,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 # IPv6 is broken, see: https://github.com/public-transport/transport.rest/issues/20
 requests.packages.urllib3.util.connection.HAS_IPV6 = False
 
+
 async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
@@ -78,10 +81,11 @@ async def async_setup_platform(
         for departure in config[CONF_DEPARTURES]:
             async_add_entities([TransportSensor(hass, departure)])
 
+
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     async_add_entities([TransportSensor(hass, config_entry.data)])
 
@@ -126,7 +130,8 @@ class TransportSensor(SensorEntity):
     def extra_state_attributes(self):
         return {
             "departures": [
-                departure.to_dict(self.show_api_line_colors) for departure in self.departures or []
+                departure.to_dict(self.show_api_line_colors)
+                for departure in self.departures or []
             ]
         }
 
@@ -172,7 +177,9 @@ class TransportSensor(SensorEntity):
             return []
 
         # convert api data into objects
-        unsorted = [Departure.from_dict(departure) for departure in departures.get("departures")]
+        unsorted = [
+            Departure.from_dict(departure) for departure in departures.get("departures")
+        ]
         return sorted(unsorted, key=lambda d: d.timestamp)
 
     def next_departure(self):
