@@ -47,7 +47,7 @@ class Departure:
             delay=source.get("delay", None),
         )
 
-    def to_dict(self, show_api_line_colors: bool):
+    def to_dict(self, show_api_line_colors: bool, walking_time: int):
         color = self.fallback_color
         if show_api_line_colors and self.bg_color is not None:
             color = self.bg_color
@@ -59,4 +59,5 @@ class Departure:
             "color": color,
             "cancelled": self.cancelled,
             "delay": self.delay,
+            "walking_time": walking_time,
         }
