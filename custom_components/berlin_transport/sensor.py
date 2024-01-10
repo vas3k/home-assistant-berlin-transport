@@ -1,3 +1,5 @@
+# mypy: disable-error-code="attr-defined"
+
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 from __future__ import annotations
 import logging
@@ -8,10 +10,13 @@ import requests
 import voluptuous as vol
 
 from homeassistant.core import HomeAssistant
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import PLATFORM_SCHEMA
+
 from .const import (  # pylint: disable=unused-import
     DOMAIN,  # noqa
     SCAN_INTERVAL,  # noqa
@@ -38,42 +43,53 @@ from .departure import Departure
 _LOGGER = logging.getLogger(__name__)
 
 TRANSPORT_TYPES_SCHEMA = {
-    vol.Optional(CONF_TYPE_SUBURBAN, default=True): bool,
-    vol.Optional(CONF_TYPE_SUBWAY, default=True): bool,
-    vol.Optional(CONF_TYPE_TRAM, default=True): bool,
-    vol.Optional(CONF_TYPE_BUS, default=True): bool,
-    vol.Optional(CONF_TYPE_FERRY, default=True): bool,
-    vol.Optional(CONF_TYPE_EXPRESS, default=True): bool,
-    vol.Optional(CONF_TYPE_REGIONAL, default=True): bool,
+    vol.Optional(CONF_TYPE_SUBURBAN, default=True): cv.boolean,
+    vol.Optional(CONF_TYPE_SUBWAY, default=True): cv.boolean,
+    vol.Optional(CONF_TYPE_TRAM, default=True): cv.boolean,
+    vol.Optional(CONF_TYPE_BUS, default=True): cv.boolean,
+    vol.Optional(CONF_TYPE_FERRY, default=True): cv.boolean,
+    vol.Optional(CONF_TYPE_EXPRESS, default=True): cv.boolean,
+    vol.Optional(CONF_TYPE_REGIONAL, default=True): cv.boolean,
 }
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Optional(CONF_DEPARTURES): [
             {
-                vol.Required(CONF_DEPARTURES_NAME): str,
-                vol.Required(CONF_DEPARTURES_STOP_ID): int,
-                vol.Optional(CONF_DEPARTURES_DIRECTION): int,
-                vol.Optional(CONF_DEPARTURES_DURATION): int,
-                vol.Optional(CONF_DEPARTURES_WALKING_TIME, default=1): int,
-                vol.Optional(CONF_SHOW_API_LINE_COLORS, default=False): bool,
+                vol.Required(CONF_DEPARTURES_NAME): cv.string,
+                vol.Required(CONF_DEPARTURES_STOP_ID): cv.positive_int,
+                vol.Optional(CONF_DEPARTURES_DIRECTION): cv.string,
+                vol.Optional(CONF_DEPARTURES_DURATION): cv.positive_int,
+                vol.Optional(CONF_DEPARTURES_WALKING_TIME, default=1): cv.positive_int,
+                vol.Optional(CONF_SHOW_API_LINE_COLORS, default=False): cv.boolean,
                 **TRANSPORT_TYPES_SCHEMA,
             }
         ]
     }
 )
 
+# IPv6 is broken, see: https://github.com/public-transport/transport.rest/issues/20
+requests.packages.urllib3.util.connection.HAS_IPV6 = False
+
 
 async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
-    add_entities: AddEntitiesCallback,
+    async_add_entities: AddEntitiesCallback,
     _: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the sensor platform."""
     if CONF_DEPARTURES in config:
         for departure in config[CONF_DEPARTURES]:
-            add_entities([TransportSensor(hass, departure)])
+            async_add_entities([TransportSensor(hass, departure)])
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    async_add_entities([TransportSensor(hass, config_entry.data)])
 
 
 class TransportSensor(SensorEntity):
@@ -84,7 +100,7 @@ class TransportSensor(SensorEntity):
         self.config: dict = config
         self.stop_id: int = config[CONF_DEPARTURES_STOP_ID]
         self.sensor_name: str | None = config.get(CONF_DEPARTURES_NAME)
-        self.direction: int | None = config.get(CONF_DEPARTURES_DIRECTION)
+        self.direction: str | None = config.get(CONF_DEPARTURES_DIRECTION)
         self.duration: int | None = config.get(CONF_DEPARTURES_DURATION)
         self.walking_time: int = config.get(CONF_DEPARTURES_WALKING_TIME) or 1
         # we add +1 minute anyway to delete the "just gone" transport
@@ -116,7 +132,8 @@ class TransportSensor(SensorEntity):
     def extra_state_attributes(self):
         return {
             "departures": [
-                departure.to_dict(self.show_api_line_colors) for departure in self.departures or []
+                departure.to_dict(self.show_api_line_colors)
+                for departure in self.departures or []
             ]
         }
 
@@ -162,7 +179,9 @@ class TransportSensor(SensorEntity):
             return []
 
         # convert api data into objects
-        unsorted = [Departure.from_dict(departure) for departure in departures.get("departures")]
+        unsorted = [
+            Departure.from_dict(departure) for departure in departures.get("departures")
+        ]
         return sorted(unsorted, key=lambda d: d.timestamp)
 
     def next_departure(self):

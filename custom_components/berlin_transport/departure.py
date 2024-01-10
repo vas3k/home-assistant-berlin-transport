@@ -25,7 +25,9 @@ class Departure:
     def from_dict(cls, source):
         line_type = source.get("line", {}).get("product")
         line_visuals = TRANSPORT_TYPE_VISUALS.get(line_type) or {}
-        timestamp=datetime.fromisoformat(source.get("when") or source.get("plannedWhen"))
+        timestamp = datetime.fromisoformat(
+            source.get("when") or source.get("plannedWhen")
+        )
         return cls(
             trip_id=source["tripId"],
             line_name=source.get("line", {}).get("name"),
@@ -43,7 +45,7 @@ class Departure:
             cancelled=source.get("cancelled", False),
         )
 
-    def to_dict(self, show_api_line_colors:bool):
+    def to_dict(self, show_api_line_colors: bool):
         color = self.fallback_color
         if show_api_line_colors and self.bg_color is not None:
             color = self.bg_color

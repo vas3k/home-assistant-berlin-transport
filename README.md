@@ -13,9 +13,19 @@ The component consists of two parts:
 1. A sensor, which tracks departures via [VBB public API](https://v6.vbb.transport.rest/api.html#get-stopsiddepartures) every 90 seconds
 2. A widget (card) for the lovelace dashboard, which displays upcoming transport in a nice way
 
-We will look at the installation of each of them separately below. But first, let's learn how to find the Stop IDs.
+We will look at the installation of each of them separately below.
 
-### How do I find my `stop_id`?
+### Install sensor component via HACS
+
+**1.** Add this [repository](https://github.com/vas3k/home-assistant-berlin-transport) as a custom repository in HACS in the category integration.
+**2.** Add `Berlin (BVG) and Brandenburg (VBB) transport` as a new integration under `Settings` -> `Devices & services`  
+**3.** Search for your stop (it will provide up to 15 stops that match your query)
+**4.** Select the stop you're looking for
+**5.** Enter further details on which transport, walking time, direction you want
+
+### Install sensor component manually
+
+#### How do I find my `stop_id`?
 
 Unfortunately, I didn't have time to figure out a proper user-friendly approach of adding new components to Home Assistant, so you will have to do some routine work of finding the IDs of the nearest transport stops to you. Sorry about that :)
 
@@ -28,7 +38,6 @@ Replace `alexanderplatz` with the name of your own stop.
 > 🧐 **Pro tip:**
 > You can also use their [location-based API](https://v6.vbb.transport.rest/api.html#get-stopsnearby) to find all stops nearby using your GPS coordinates.
 
-### Install sensor component
 
 **1.** Copy the whole [berlin_transport](./custom_components/) directory to the `custom_components` folder of your Home Assistant installation. If you can't find the `custom_components` directory at the same level with your `configuration.yml` — simply create it yourself and put `berlin_transport` there.
 

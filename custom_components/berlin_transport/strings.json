@@ -1,0 +1,38 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Search Stop",
+        "description": "Enter the Name of the Stop to find the Stop ID",
+        "data": {
+          "search": "Name of the Stop"
+        }
+      },
+      "stop": {
+        "title": "Select Stop",
+        "description": "Select the desired Stop",
+        "data": {
+          "name": "Name of the Stop",
+          "stop_id": "ID of the Stop"
+        }
+      },
+      "details": {
+        "title": "Further Details",
+        "description": "Add further details",
+        "data": {
+          "walking_time": "Walking time in minutes",
+          "direction": "Filter departures by direction",
+          "show_official_line_colors": "Enable official VBB line colors",
+          "duration": "Show departures for how many minutes?",
+          "suburban": "Include S-Bahn",
+          "subway": "Include U-Bahn",
+          "tram": "Include Tram",
+          "bus": "Include Bus",
+          "ferry": "Include Ferry",
+          "express": "Include IC/ICE",
+          "regional": "Include RB/RE"
+        }
+      }
+    }
+  }
+}
