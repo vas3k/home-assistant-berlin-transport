@@ -20,6 +20,7 @@ class Departure:
     fallback_color: str | None = None
     location: tuple[float, float] | None = None
     cancelled: bool = False
+    delay: int | None = None
 
     @classmethod
     def from_dict(cls, source):
@@ -43,6 +44,7 @@ class Departure:
                 source.get("currentTripPosition", {}).get("longitude") or 0.0,
             ],
             cancelled=source.get("cancelled", False),
+            delay=source.get("delay", None),
         )
 
     def to_dict(self, show_api_line_colors: bool):
@@ -56,4 +58,5 @@ class Departure:
             "direction": self.direction,
             "color": color,
             "cancelled": self.cancelled,
+            "delay": self.delay,
         }
