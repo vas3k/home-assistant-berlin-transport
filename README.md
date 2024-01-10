@@ -2,7 +2,7 @@
 
 Custom integration that displays upcoming departures from your defined public transport stops for Berlin and Brandenburg.
 
-This repository contains only the integration, **the Lovelace card itself lives here: https://github.com/vas3k/home-assistant-berlin-transport-card**
+This repository contains only the integration, **the Lovelace card itself lives here: https://github.com/vas3k/lovelace-berlin-transport-card**
 
 You need to install them both. Preferably through HACS. We have separated two repositories to make installation through it more convenient.
 
@@ -15,7 +15,7 @@ You need to install them both. Preferably through HACS. We have separated two re
 The component consists of two parts:
 
 1. A sensor, which tracks departures via [VBB public API](https://v6.vbb.transport.rest/api.html#get-stopsiddepartures) every 90 seconds. This is this repository.
-2. A widget (card) for the lovelace dashboard, which displays upcoming transport in a nice way. It has its own [separate repository](https://github.com/vas3k/home-assistant-berlin-transport-card) with installation instructions.
+2. A widget (card) for the lovelace dashboard, which displays upcoming transport in a nice way. It has its own [separate repository](https://github.com/vas3k/lovelace-berlin-transport-card) with installation instructions.
 
 ### Install sensor component via HACS
 
@@ -73,7 +73,7 @@ sensor:
 
 ### Add the lovelace card
 
-Go to [home-assistant-berlin-transport-card](https://github.com/vas3k/home-assistant-berlin-transport-card) repo and follow installation instructions there.
+Go to [lovelace-berlin-transport-card](https://github.com/vas3k/lovelace-berlin-transport-card) repo and follow installation instructions there.
 
 ## 👩‍💻 Technical details
 
