@@ -1,6 +1,10 @@
 # Berlin (BVG) and Brandenburg (VBB) transport widget for Home Assistant
 
-Custom sensor component and lovelace card that displays upcoming departures from your defined public transport stops for Berlin and Brandenburg.
+Custom integration that displays upcoming departures from your defined public transport stops for Berlin and Brandenburg.
+
+This repository contains only the integration, **the Lovelace card itself lives here: https://github.com/vas3k/home-assistant-berlin-transport-card**
+
+You need to install them both. Preferably through HACS. We have separated two repositories to make installation through it more convenient.
 
 ![](./docs/screenshots/timetable-card.jpg)
 
@@ -10,17 +14,19 @@ Custom sensor component and lovelace card that displays upcoming departures from
 
 The component consists of two parts:
 
-1. A sensor, which tracks departures via [VBB public API](https://v6.vbb.transport.rest/api.html#get-stopsiddepartures) every 90 seconds
-2. A widget (card) for the lovelace dashboard, which displays upcoming transport in a nice way
-
-We will look at the installation of each of them separately below.
+1. A sensor, which tracks departures via [VBB public API](https://v6.vbb.transport.rest/api.html#get-stopsiddepartures) every 90 seconds. This is this repository.
+2. A widget (card) for the lovelace dashboard, which displays upcoming transport in a nice way. It has its own [separate repository](https://github.com/vas3k/home-assistant-berlin-transport-card) with installation instructions.
 
 ### Install sensor component via HACS
 
-**1.** Add this [repository](https://github.com/vas3k/home-assistant-berlin-transport) as a custom repository in HACS in the category integration.
+**1.** Add this [repository](https://github.com/vas3k/home-assistant-berlin-transport) as a custom repository in HACS in the category "integration".
+
 **2.** Add `Berlin (BVG) and Brandenburg (VBB) transport` as a new integration under `Settings` -> `Devices & services`  
+
 **3.** Search for your stop (it will provide up to 15 stops that match your query)
+
 **4.** Select the stop you're looking for
+
 **5.** Enter further details on which transport, walking time, direction you want
 
 ### Install sensor component manually
@@ -67,32 +73,7 @@ sensor:
 
 ### Add the lovelace card
 
-When sensor component is installed and working you can add the new fancy widget for your dashboard.
-
-**1.** Copy the [berlin-transport-timetable-card.js](./dist) card module to the `www` directory of your Home Assistant. The same way you did for the sensor above. If it doesn't exist — create one.
-
-**2.** Go to your Home Assistant dashboard, click "Edit dashboard" at the right top corner and after that in the same top right corner choose "Manage resources".
-
-**3.** Add new resource with URL: `/local/berlin-transport-timetable-card.js` and click create. Go back to your dashboard and refresh the page.
-
-**4.** Now you can add the custom card and integrate it with your sensor. Click "Add card -> Manual" or just go to "Raw configuration editor" and use this config.
-
-```yaml
-- type: custom:berlin-transport-timetable-card
-  show_stop_name: true # show or hide the name of your stop in card title
-  max_entries: 8 # number of upcoming departures to show (max: 10)
-  entities:
-    - sensor.stop_id_900110001 # use your entity IDs here
-    - sensor.stargarder_str # they might be different from mine
-  show_cancelled: true # show or hide the cancelled departures. When not defined or true, the cancelled departures will be shown as struk-through.
-```
-
-## 🚨 Update
-This update brings new sensor id generation. It will result in deactivation of sensors with the old ids. All of those inactive sensors can be manually deleted either from the lovelace card directly and refreshing the dashboard or from the entities list in `Settings`.
-
-## 🎨 Styling
-
-If you want to change any styles, font size or layout — the easiest way is to use [card_mod](https://github.com/thomasloven/lovelace-card-mod) component. It allows you to change any CSS classes to whatever you want.
+Go to [home-assistant-berlin-transport-card](https://github.com/vas3k/home-assistant-berlin-transport-card) repo and follow installation instructions there.
 
 ## 👩‍💻 Technical details
 
