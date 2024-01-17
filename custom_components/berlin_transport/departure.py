@@ -55,6 +55,7 @@ class Departure:
             "line_name": self.line_name,
             "line_type": self.line_type,
             "time": self.time,
+            "timestamp": self.timestamp,
             "direction": self.direction,
             "color": color,
             "cancelled": self.cancelled,
