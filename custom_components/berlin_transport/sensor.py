@@ -3,7 +3,6 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 from __future__ import annotations
 import logging
-from typing import Optional
 from datetime import datetime, timedelta
 
 import requests
@@ -140,7 +139,7 @@ class TransportSensor(SensorEntity):
     def update(self):
         self.departures = self.fetch_departures()
 
-    def fetch_departures(self) -> Optional[list[Departure]]:
+    def fetch_directional_departure(self, direction: str | None) -> list[Departure]:
         try:
             response = requests.get(
                 url=f"{API_ENDPOINT}/stops/{self.stop_id}/departures",
@@ -148,7 +147,7 @@ class TransportSensor(SensorEntity):
                     "when": (
                         datetime.utcnow() + timedelta(minutes=self.walking_time)
                     ).isoformat(),
-                    "direction": self.direction,
+                    "direction": direction,
                     "duration": self.duration,
                     "results": API_MAX_RESULTS,
                     "suburban": self.config.get(CONF_TYPE_SUBURBAN) or False,
@@ -179,10 +178,23 @@ class TransportSensor(SensorEntity):
             return []
 
         # convert api data into objects
-        unsorted = [
-            Departure.from_dict(departure) for departure in departures.get("departures")
-        ]
-        return sorted(unsorted, key=lambda d: d.timestamp)
+        return [Departure.from_dict(departure) for departure in departures.get("departures")]
+
+    def fetch_departures(self) -> list[Departure]:
+        departures = []
+
+        if self.direction is None:
+            departures += self.fetch_directional_departure(self.direction)
+        else:
+            for direction in self.direction.split(','):
+                departures += self.fetch_directional_departure(direction)
+
+        # Get rid of duplicates
+        # Duplicates should only exist for the Ringbahn and filtering for both
+        # directions
+        deduplicated_departures = set(departures)
+
+        return sorted(deduplicated_departures, key=lambda d: d.timestamp)
 
     def next_departure(self):
         if self.departures and isinstance(self.departures, list):

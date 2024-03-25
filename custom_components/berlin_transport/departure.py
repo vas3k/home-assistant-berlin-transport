@@ -62,3 +62,14 @@ class Departure:
             "delay": self.delay,
             "walking_time": walking_time,
         }
+
+    # Make the object hashable and use all infos that can be displayed in the
+    # frontend
+    def __hash__(self):
+        # The value of colors and walking time doesn't matter, it just needs to
+        # be the same for all evaluations of this function
+        items = self.to_dict(show_api_line_colors=False, walking_time=0).items()
+        # Dictionaries are not hashable, so use the items, sort them for
+        # reproducibility. Convert it to a tuple, since lists are also not
+        # hashable
+        return hash(tuple(sorted(items)))
