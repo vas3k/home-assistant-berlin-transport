@@ -23,6 +23,7 @@ from .const import (  # pylint: disable=unused-import
     API_MAX_RESULTS,
     CONF_DEPARTURES,
     CONF_DEPARTURES_DIRECTION,
+    CONF_DEPARTURES_EXCLUDED_STOPS,
     CONF_DEPARTURES_DURATION,
     CONF_DEPARTURES_STOP_ID,
     CONF_DEPARTURES_WALKING_TIME,
@@ -58,6 +59,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
                 vol.Required(CONF_DEPARTURES_NAME): cv.string,
                 vol.Required(CONF_DEPARTURES_STOP_ID): cv.positive_int,
                 vol.Optional(CONF_DEPARTURES_DIRECTION): cv.string,
+                vol.Optional(CONF_DEPARTURES_EXCLUDED_STOPS): cv.string,
                 vol.Optional(CONF_DEPARTURES_DURATION): cv.positive_int,
                 vol.Optional(CONF_DEPARTURES_WALKING_TIME, default=1): cv.positive_int,
                 vol.Optional(CONF_SHOW_API_LINE_COLORS, default=False): cv.boolean,
@@ -98,6 +100,7 @@ class TransportSensor(SensorEntity):
         self.hass: HomeAssistant = hass
         self.config: dict = config
         self.stop_id: int = config[CONF_DEPARTURES_STOP_ID]
+        self.excluded_stops: str | None = config.get(CONF_DEPARTURES_EXCLUDED_STOPS)
         self.sensor_name: str | None = config.get(CONF_DEPARTURES_NAME)
         self.direction: str | None = config.get(CONF_DEPARTURES_DIRECTION)
         self.duration: int | None = config.get(CONF_DEPARTURES_DURATION)
@@ -177,8 +180,17 @@ class TransportSensor(SensorEntity):
             _LOGGER.error(f"API invalid JSON: {ex}")
             return []
 
+        if self.excluded_stops is None:
+            excluded_stops = []
+        else:
+            excluded_stops = self.excluded_stops.split(",")
+
         # convert api data into objects
-        return [Departure.from_dict(departure) for departure in departures.get("departures")]
+        return [
+            Departure.from_dict(departure)
+            for departure in departures.get("departures")
+            if departure["stop"]["id"] not in excluded_stops
+        ]
 
     def fetch_departures(self) -> list[Departure]:
         departures = []
