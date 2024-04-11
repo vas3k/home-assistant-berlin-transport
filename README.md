@@ -65,6 +65,7 @@ sensor:
       - name: "Stargarder Str." # currently you have to add more than one stop to track
         stop_id: 900000110501
         # direction: 900000100002 # Optional stop_id to limit departures for a specific direction (same URL as to find the stop_id), multiple Values can be specified using a comma separated list
+        # excluded_stops: 900110502,900007102 # Exclude these stop IDs from the departures, duplicate departures may be shown for nearby stations
         # walking_time: 5 # Optional parameter with value in minutes that hide transport closer than N minutes
         # show_official_line_colors: true # Optionally enable official VBB line colors. By default predefined colors will be used.
         # duration: 30 # Optional (default 10), query departures for how many minutes from now?
