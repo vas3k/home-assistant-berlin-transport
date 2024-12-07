@@ -1,0 +1,39 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Haltestelle suchen",
+        "description": "Geben Sie den Namen der Haltestelle ein, um die ID zu finden",
+        "data": {
+          "search": "Name der Haltestelle"
+        }
+      },
+      "stop": {
+        "title": "Haltestelle auswählen",
+        "description": "Wählen Sie die gewünschte Zielhaltestelle aus",
+        "data": {
+          "name": "Name der Zielhaltestelle",
+          "stop_id": "ID der Zielhaltestelle"
+        }
+      },
+      "details": {
+        "title": "Weitere Details",
+        "description": "Weitere Details hinzufügen",
+        "data": {
+          "walking_time": "Minuten zur Haltestelle",
+          "direction": "Abfahrten nach Fahrtrichtung filtern",
+          "excluded_stops": "Nahegelegene Haltestellen durch IDs ignorieren",
+          "show_official_line_colors": "Nutze die offiziellen VBB Streckenfarben",
+          "duration": "Zeige Abfahrten für welchen Zeitraum an?",
+          "suburban": "S-Bahn erfassen",
+          "subway": "U-Bahn erfassen",
+          "tram": "Tram erfassen",
+          "bus": "Bus erfassen",
+          "ferry": "Fähren erfassen",
+          "express": "IC/ICE erfassen",
+          "regional": "RB/RE erfassen"
+        }
+      }
+    }
+  }
+}
