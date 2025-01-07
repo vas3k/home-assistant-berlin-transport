@@ -104,6 +104,7 @@ class TransportSensor(SensorEntity):
         self.walking_time: int = config.get(CONF_DEPARTURES_WALKING_TIME) or 1
         # we add +1 minute anyway to delete the "just gone" transport
         self.show_api_line_colors: bool = config.get(CONF_SHOW_API_LINE_COLORS) or False
+        self.session: requests.Session = requests.Session()
 
     @property
     def name(self) -> str:
@@ -141,7 +142,7 @@ class TransportSensor(SensorEntity):
 
     def fetch_directional_departure(self, direction: str | None) -> list[Departure]:
         try:
-            response = requests.get(
+            response = self.session.get(
                 url=f"{API_ENDPOINT}/stops/{self.stop_id}/departures",
                 params={
                     "when": (
