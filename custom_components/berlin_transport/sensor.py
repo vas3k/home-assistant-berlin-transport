@@ -69,9 +69,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
-# IPv6 is broken, see: https://github.com/public-transport/transport.rest/issues/20
-requests.packages.urllib3.util.connection.HAS_IPV6 = False
-
 
 async def async_setup_platform(
     hass: HomeAssistant,
