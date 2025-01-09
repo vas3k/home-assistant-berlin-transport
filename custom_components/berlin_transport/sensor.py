@@ -5,7 +5,8 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta
 
-import requests
+from requests.exceptions import HTTPError, InvalidJSONError, Timeout
+from requests_cache import CachedSession
 import voluptuous as vol
 
 from homeassistant.core import HomeAssistant
@@ -104,7 +105,7 @@ class TransportSensor(SensorEntity):
         self.walking_time: int = config.get(CONF_DEPARTURES_WALKING_TIME) or 1
         # we add +1 minute anyway to delete the "just gone" transport
         self.show_api_line_colors: bool = config.get(CONF_SHOW_API_LINE_COLORS) or False
-        self.session: requests.Session = requests.Session()
+        self.session: CachedSession = CachedSession("berlin-transport", cache_control=True)
 
     @property
     def name(self) -> str:
@@ -162,10 +163,10 @@ class TransportSensor(SensorEntity):
                 timeout=30,
             )
             response.raise_for_status()
-        except requests.exceptions.HTTPError as ex:
+        except HTTPError as ex:
             _LOGGER.warning(f"API error: {ex}")
             return []
-        except requests.exceptions.Timeout as ex:
+        except Timeout as ex:
             _LOGGER.warning(f"API timeout: {ex}")
             return []
 
@@ -174,7 +175,7 @@ class TransportSensor(SensorEntity):
         # parse JSON response
         try:
             departures = response.json()
-        except requests.exceptions.InvalidJSONError as ex:
+        except InvalidJSONError as ex:
             _LOGGER.error(f"API invalid JSON: {ex}")
             return []
 
