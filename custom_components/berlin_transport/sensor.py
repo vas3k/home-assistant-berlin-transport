@@ -6,7 +6,7 @@ import logging
 from datetime import datetime, timedelta
 
 from requests.exceptions import HTTPError, InvalidJSONError, Timeout
-from requests_cache import CachedSession, SQLiteCache
+from requests_cache import CachedSession
 import voluptuous as vol
 
 from homeassistant.core import HomeAssistant
@@ -105,11 +105,7 @@ class TransportSensor(SensorEntity):
         self.walking_time: int = config.get(CONF_DEPARTURES_WALKING_TIME) or 1
         # we add +1 minute anyway to delete the "just gone" transport
         self.show_api_line_colors: bool = config.get(CONF_SHOW_API_LINE_COLORS) or False
-        self.session: CachedSession = CachedSession(
-            backend=SQLiteCache(use_memory=True), 
-            cache_control=True, 
-            expire_after=timedelta(days=1)
-        )
+        self.session: CachedSession = CachedSession("berlin-transport", cache_control=True)
 
     @property
     def name(self) -> str:
