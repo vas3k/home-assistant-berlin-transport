@@ -20,9 +20,9 @@
         "title": "Further Details",
         "description": "Add further details",
         "data": {
-          "walking_time": "Walking time in minutes",
-          "direction": "Filter departures by direction",
-          "excluded_stops": "Exclude nearby stops with IDs",
+          "walking_time": "Walking time to stop in minutes",
+          "direction": "Filter departures by the following final destionation(s)",
+          "excluded_stops": "Exclude certain IDs for merged stops",
           "show_official_line_colors": "Enable official VBB line colors",
           "duration": "Show departures for how many minutes?",
           "suburban": "Include S-Bahn",
