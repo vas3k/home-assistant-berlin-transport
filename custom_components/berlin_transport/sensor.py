@@ -63,6 +63,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
                 vol.Optional(CONF_DEPARTURES_EXCLUDED_STOPS): cv.string,
                 vol.Optional(CONF_DEPARTURES_DURATION): cv.positive_int,
                 vol.Optional(CONF_DEPARTURES_WALKING_TIME, default=1): cv.positive_int,
+                vol.Optional(CONF_FILTER_RINGBAHN_CLOCKWISE, default=False): cv.boolean,
+                vol.Optional(CONF_FILTER_RINGBAHN_COUNTERCLOCKWISE, default=False): cv.boolean,
                 vol.Optional(CONF_SHOW_API_LINE_COLORS, default=False): cv.boolean,
                 **TRANSPORT_TYPES_SCHEMA,
             }
@@ -139,7 +141,11 @@ class TransportSensor(SensorEntity):
             "departures": [
                 departure.to_dict(self.show_api_line_colors, self.walking_time)
                 for departure in self.departures or []
-            ]
+            ],
+        "filtered_ringbahn": {
+            "clockwise": self.config.get(CONF_FILTER_RINGBAHN_CLOCKWISE, False),
+            "counterclockwise": self.config.get(CONF_FILTER_RINGBAHN_COUNTERCLOCKWISE, False),
+            }
         }
 
     def update(self):
@@ -181,19 +187,34 @@ class TransportSensor(SensorEntity):
             departures = response.json()
         except InvalidJSONError as ex:
             _LOGGER.error(f"API invalid JSON: {ex}")
-            return []
+        return []
 
+        # Ringbahn-Filter aktivieren
+        filter_clockwise = self.config.get(CONF_FILTER_RINGBAHN_CLOCKWISE, False)
+        filter_counterclockwise = self.config.get(CONF_FILTER_RINGBAHN_COUNTERCLOCKWISE, False)
+
+        # Excluded stops vorbereiten
         if self.excluded_stops is None:
             excluded_stops = []
         else:
             excluded_stops = self.excluded_stops.split(",")
 
         # convert api data into objects
-        return [
-            Departure.from_dict(departure)
-            for departure in departures.get("departures")
-            if departure["stop"]["id"] not in excluded_stops
-        ]
+        filtered_departures = []
+        for departure in departures.get("departures", []):
+            direction_text = departure.get("direction", "")
+            stop_id = departure["stop"]["id"]
+
+            if stop_id in excluded_stops:
+                continue
+            if filter_clockwise and "⟳" in direction_text:
+                continue
+            if filter_counterclockwise and "⟲" in direction_text:
+                continue
+
+            filtered_departures.append(Departure.from_dict(departure))
+
+        return filtered_departures
 
     def fetch_departures(self) -> list[Departure]:
         departures = []
