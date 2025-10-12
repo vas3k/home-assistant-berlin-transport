@@ -1,6 +1,6 @@
 {
-  "domain": "test_berlin_transport",
-  "name": "TEST: Berlin (BVG) and Brandenburg (VBB) transport",
+  "domain": "berlin_transport",
+  "name": "Berlin (BVG) and Brandenburg (VBB) transport",
   "codeowners": ["@vas3k"],
   "config_flow": true,
   "dependencies": [],
