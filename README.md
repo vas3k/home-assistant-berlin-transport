@@ -19,15 +19,18 @@ The component consists of two parts:
 
 ### Install sensor component via HACS
 
-**1.** Add this [repository](https://github.com/vas3k/home-assistant-berlin-transport) as a custom repository in HACS in the category "integration".
-
-**2.** Add `Berlin (BVG) and Brandenburg (VBB) transport` as a new integration under `Settings` -> `Devices & services`  
-
-**3.** Search for your stop (it will provide up to 15 stops that match your query)
-
-**4.** Select the stop you're looking for
-
-**5.** Enter further details on which transport, walking time, direction you want
+1. Add this [repository](https://github.com/vas3k/home-assistant-berlin-transport) as a custom repository in HACS in the category "integration".
+1. Add `Berlin (BVG) and Brandenburg (VBB) transport` as a new integration under `Settings` -> `Devices & services`  
+1. Search for your stop. Partial matches are supported — up to 15 relevant stops will be listed.
+1. Select the stop you want to monitor.
+1. (Optional) Configure additional parameters:
+    - Direction: Use `stop_id` to filter departures by direction. Provide the stop_id of the line’s final destination. Multiple values can be specified using a comma-separated list. See [below](#how-do-i-find-my-stop_id) for how to find the `stop id`.
+    - Exclude stops: List of `stop_id` which should be excluded. Use if BVG/VBB is returning departures from nearby stops. Multiple values can be specified using a comma-separated list.
+    - Duration: Defines how many minutes into the future departures should be fetched. Default is 10 minutes.
+    - Walking time: Enter the time needed to walk to the stop. This prevents unreachable departures from being shown.
+    - Enable official VBB line colors: Optionally enable official VBB line colors. By default, predefined colors are used.
+    - Transport options: Choose which transport types (e.g., bus, ferry) to show or hide.
+1. Done. If you want to change options later on, just run through the steps again with the same stop. The previous entity will be overwritten automatically.
 
 ### Install sensor component manually
 
@@ -43,7 +46,6 @@ Replace `alexanderplatz` with the name of your own stop.
 
 > 🧐 **Pro tip:**
 > You can also use their [location-based API](https://v6.vbb.transport.rest/api.html#get-stopsnearby) to find all stops nearby using your GPS coordinates.
-
 
 **1.** Copy the whole [berlin_transport](./custom_components/) directory to the `custom_components` folder of your Home Assistant installation. If you can't find the `custom_components` directory at the same level with your `configuration.yml` — simply create it yourself and put `berlin_transport` there.
 
