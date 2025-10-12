@@ -3,14 +3,14 @@
     "step": {
       "user": {
         "title": "Haltestelle suchen",
-        "description": "Geben Sie den Namen der Haltestelle ein, um die ID zu finden",
+        "description": "Name eingeben, um die Haltestellen-ID zu finden",
         "data": {
-          "search": "Name der Haltestelle"
+          "search": "Haltestellenname"
         }
       },
       "stop": {
         "title": "Haltestelle auswählen",
-        "description": "Wählen Sie die gewünschte Zielhaltestelle aus",
+        "description": "Zielhaltestelle auswählen",
         "data": {
           "name": "Name der Zielhaltestelle",
           "stop_id": "ID der Zielhaltestelle"
@@ -18,20 +18,20 @@
       },
       "details": {
         "title": "Weitere Details",
-        "description": "Weitere Details hinzufügen",
+        "description": "Zusätzliche Einstellungen",
         "data": {
           "walking_time": "Gehminuten zur Haltestelle",
-          "direction": "Nur Abfahrten zu folgenden Endhaltestellen anzeigen",
-          "excluded_stops": "Für zusammen angezeigten Haltestellen folgende herausfiltern",
-          "show_official_line_colors": "Nutze die offiziellen VBB Streckenfarben",
-          "duration": "Zeige Abfahrten für welchen Zeitraum an (in Minuten)?",
-          "suburban": "S-Bahn erfassen",
-          "subway": "U-Bahn erfassen",
-          "tram": "Tram erfassen",
-          "bus": "Bus erfassen",
-          "ferry": "Fähren erfassen",
-          "express": "IC/ICE erfassen",
-          "regional": "RB/RE erfassen"
+          "direction": "Nur Abfahrten zu diesen Endhaltestellen",
+          "excluded_stops": "Diese nahegelegenen Haltestellen ignorieren",
+          "show_official_line_colors": "Offizielle VBB-Farben verwenden",
+          "duration": "Zeitraum für Abfahrten (Minuten)",
+          "suburban": "S-Bahn anzeigen",
+          "subway": "U-Bahn anzeigen",
+          "tram": "Tram anzeigen",
+          "bus": "Bus anzeigen",
+          "ferry": "Fähren anzeigen",
+          "express": "IC/ICE anzeigen",
+          "regional": "RB/RE anzeigen"
         }
       }
     }
