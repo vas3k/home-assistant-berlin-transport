@@ -21,8 +21,8 @@
         "description": "Weitere Details hinzufügen",
         "data": {
           "walking_time": "Gehminuten zur Haltestelle",
-          "direction": "Nur Abfahrten zur Endhaltestelle anzeigen",
-          "excluded_stops": "Bei zusammen angezeigten Haltestellen folgende herausfiltern",
+          "direction": "Nur Abfahrten zu folgenden Endhaltestellen anzeigen",
+          "excluded_stops": "Für zusammen angezeigten Haltestellen folgende herausfiltern",
           "show_official_line_colors": "Nutze die offiziellen VBB Streckenfarben",
           "duration": "Zeige Abfahrten für welchen Zeitraum an (in Minuten)?",
           "suburban": "S-Bahn erfassen",
