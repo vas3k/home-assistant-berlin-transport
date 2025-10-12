@@ -21,7 +21,7 @@
         "description": "Additional settings",
         "data": {
           "walking_time": "Walking time to stop (minutes)",
-          "direction": "Only show departures to these final destinations",
+          "direction": "Only show departures which pass or end at these destinations",
           "excluded_stops": "Ignore these nearby stop IDs",
           "show_official_line_colors": "Use official VBB line colors",
           "duration": "Departure time range (minutes)",
