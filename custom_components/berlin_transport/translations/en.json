@@ -3,35 +3,35 @@
     "step": {
       "user": {
         "title": "Search Stop",
-        "description": "Enter the Name of the Stop to find the Stop ID",
+        "description": "Enter stop name to find its ID",
         "data": {
-          "search": "Name of the Stop"
+          "search": "Stop name"
         }
       },
       "stop": {
         "title": "Select Stop",
-        "description": "Select the desired Stop",
+        "description": "Choose your stop",
         "data": {
-          "name": "Name of the Stop",
-          "stop_id": "ID of the Stop"
+          "name": "Stop name",
+          "stop_id": "Stop ID"
         }
       },
       "details": {
-        "title": "Further Details",
-        "description": "Add further details",
+        "title": "More Details",
+        "description": "Additional settings",
         "data": {
-          "walking_time": "Walking time to stop in minutes",
-          "direction": "Filter departures by the following final destionation(s)",
-          "excluded_stops": "Exclude certain IDs for merged stops",
-          "show_official_line_colors": "Enable official VBB line colors",
-          "duration": "Show departures for how many minutes?",
-          "suburban": "Include S-Bahn",
-          "subway": "Include U-Bahn",
-          "tram": "Include Tram",
-          "bus": "Include Bus",
-          "ferry": "Include Ferry",
-          "express": "Include IC/ICE",
-          "regional": "Include RB/RE"
+          "walking_time": "Walking time to stop (minutes)",
+          "direction": "Only show departures to these final destinations",
+          "excluded_stops": "Ignore these nearby stop IDs",
+          "show_official_line_colors": "Use official VBB line colors",
+          "duration": "Departure time range (minutes)",
+          "suburban": "Show S-Bahn",
+          "subway": "Show U-Bahn",
+          "tram": "Show Tram",
+          "bus": "Show Bus",
+          "ferry": "Show Ferry",
+          "express": "Show IC/ICE",
+          "regional": "Show RB/RE"
         }
       }
     }
