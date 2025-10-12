@@ -141,7 +141,11 @@ class TransportSensor(SensorEntity):
             "departures": [
                 departure.to_dict(self.show_api_line_colors, self.walking_time)
                 for departure in self.departures or []
-            ]
+            ],
+        "filtered_ringbahn": {
+            "clockwise": self.config.get(CONF_FILTER_RINGBAHN_CLOCKWISE, False),
+            "counterclockwise": self.config.get(CONF_FILTER_RINGBAHN_COUNTERCLOCKWISE, False),
+            }
         }
 
     def update(self):
