@@ -21,7 +21,7 @@
         "description": "Zusätzliche Einstellungen",
         "data": {
           "walking_time": "Gehminuten zur Haltestelle",
-          "direction": "Nur Abfahrten zu diesen Endhaltestellen",
+          "direction": "Nur Abfahrten zu diesen (End-)Haltestellen",
           "excluded_stops": "Diese nahegelegenen Haltestellen ignorieren",
           "show_official_line_colors": "Offizielle VBB-Farben verwenden",
           "duration": "Zeitraum für Abfahrten (Minuten)",
