@@ -1,5 +1,7 @@
 {
   "name": "Berlin (BVG) and Brandenburg (VBB) transport",
   "hide_default_branch": false,
-  "render_readme": true
+  "country": "DE",
+  "homeassistant": "2023.9.0",
+  "hacs": "1.0.0"
 }
