@@ -8,6 +8,5 @@
   "codeowners": ["@vas3k"],  
   "config_flow": true,
   "requirements": ["requests", "requests-cache"],
-  "quality_scale": "bronze"
   "iot_class": "cloud_polling",
 }
