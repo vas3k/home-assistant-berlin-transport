@@ -94,7 +94,7 @@ def list_stops(stops) -> Optional[vol.Schema]:
     """Provides a drop down list of stops"""
     schema = vol.Schema(
         {
-            vol.Required(CONF_SELECTED_STOP, default=False): selector.SelectSelector(
+            vol.Required(CONF_SELECTED_STOP): selector.SelectSelector(
                 selector.SelectSelectorConfig(
                     options=[
                         f"{stop[CONF_DEPARTURES_NAME]} [{stop[CONF_DEPARTURES_STOP_ID]}]"
