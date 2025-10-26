@@ -101,6 +101,7 @@ def list_stops(stops) -> Optional[vol.Schema]:
                         for stop in stops
                     ],
                     mode=selector.SelectSelectorMode.DROPDOWN,
+                    translation_key="selected_stop_id"
                 )
             )
         }
