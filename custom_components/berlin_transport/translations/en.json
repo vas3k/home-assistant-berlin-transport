@@ -10,10 +10,10 @@
       },
       "stop": {
         "title": "Select Stop",
-        "description": "Choose your stop",
+        "description": "Select your desired stop from the list of search results.",
         "data": {
           "name": "Stop name",
-          "selected_stop": "Stop ID"
+          "selected_stop": "Stop (name and ID)"
         }
       },
       "details": {
