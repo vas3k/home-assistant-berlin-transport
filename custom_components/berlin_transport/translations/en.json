@@ -13,7 +13,7 @@
         "description": "Choose your stop",
         "data": {
           "name": "Stop name",
-          "selected_stop_id": "Stop ID"
+          "selected_stop": "Stop ID"
         }
       },
       "details": {
