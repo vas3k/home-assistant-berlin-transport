@@ -13,7 +13,7 @@
         "description": "Haltestelle auswählen",
         "data": {
           "name": "Name der Haltestelle",
-          "selected_stop_id": "ID der Haltestelle"
+          "selected_stop": "ID der Haltestelle"
         }
       },
       "details": {
