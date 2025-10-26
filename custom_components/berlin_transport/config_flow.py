@@ -18,6 +18,7 @@ from .const import (
     API_MAX_RESULTS,
     CONF_DEPARTURES_STOP_ID,
     CONF_DEPARTURES_NAME,
+    CONF_SELECTED_STOP,
     CONF_DEPARTURES_DIRECTION,
     CONF_DEPARTURES_EXCLUDED_STOPS,
     CONF_DEPARTURES_DURATION,
@@ -32,8 +33,6 @@ _LOGGER = logging.getLogger(__name__)
 
 CONF_SEARCH = "search"
 CONF_FOUND_STOPS = "found_stops"
-CONF_SELECTED_STOP = "selected_stop"
-
 
 DATA_SCHEMA = vol.Schema(
     {
