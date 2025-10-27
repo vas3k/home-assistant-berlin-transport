@@ -18,6 +18,7 @@ from .const import (
     API_MAX_RESULTS,
     CONF_DEPARTURES_STOP_ID,
     CONF_DEPARTURES_NAME,
+    CONF_SELECTED_STOP,
     CONF_DEPARTURES_DIRECTION,
     CONF_DEPARTURES_EXCLUDED_STOPS,
     CONF_DEPARTURES_DURATION,
@@ -32,8 +33,6 @@ _LOGGER = logging.getLogger(__name__)
 
 CONF_SEARCH = "search"
 CONF_FOUND_STOPS = "found_stops"
-CONF_SELECTED_STOP = "selected_stop"
-
 
 DATA_SCHEMA = vol.Schema(
     {
@@ -95,13 +94,13 @@ def list_stops(stops) -> Optional[vol.Schema]:
     """Provides a drop down list of stops"""
     schema = vol.Schema(
         {
-            vol.Required(CONF_SELECTED_STOP, default=False): selector.SelectSelector(
+            vol.Required(CONF_SELECTED_STOP): selector.SelectSelector(
                 selector.SelectSelectorConfig(
                     options=[
                         f"{stop[CONF_DEPARTURES_NAME]} [{stop[CONF_DEPARTURES_STOP_ID]}]"
                         for stop in stops
                     ],
-                    mode=selector.SelectSelectorMode.DROPDOWN,
+                    mode=selector.SelectSelectorMode.DROPDOWN
                 )
             )
         }
