@@ -100,8 +100,7 @@ def list_stops(stops) -> Optional[vol.Schema]:
                         f"{stop[CONF_DEPARTURES_NAME]} [{stop[CONF_DEPARTURES_STOP_ID]}]"
                         for stop in stops
                     ],
-                    mode=selector.SelectSelectorMode.DROPDOWN,
-                    translation_key="selected_stop"
+                    mode=selector.SelectSelectorMode.DROPDOWN
                 )
             )
         }
