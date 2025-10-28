@@ -23,6 +23,8 @@
           "walking_time": "Walking time in minutes",
           "direction": "Filter departures by direction",
           "excluded_stops": "Exclude nearby stops with IDs",
+          "filter_ringbahn_clockwise": "Do not show Ringbahn ⟳ (clockwise)",
+          "filter_ringbahn_counterclockwise": "Do not show Ringbahn ⟲ (counter clockwise)",
           "show_official_line_colors": "Enable official VBB line colors",
           "duration": "Show departures for how many minutes?",
           "suburban": "Include S-Bahn",
