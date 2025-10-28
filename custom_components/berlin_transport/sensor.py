@@ -226,7 +226,7 @@ class TransportSensor(SensorEntity):
         # Get rid of duplicates
         # Duplicates should only exist for the Ringbahn and filtering for both
         # directions
-        deduplicated_departures = set(departures)
+        deduplicated_departures = set(filtered_departures)
 
         return sorted(deduplicated_departures, key=lambda d: d.timestamp)
 
