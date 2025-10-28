@@ -209,6 +209,11 @@ class TransportSensor(SensorEntity):
         else:
             for direction in self.direction.split(','):
                 departures += self.fetch_directional_departure(direction)
+       
+        # Step 1: Deduplicate departures
+
+        # Duplicates should only exist for the Ringbahn and filtering for both directions
+        deduplicated_departures = set(departures)
 
         # Ringbahn-Filter anwenden
 
@@ -216,19 +221,14 @@ class TransportSensor(SensorEntity):
         # We filter for them instead of hard-coding the line names (S41/S42). Maybe this is more future proof, otherwise below code
         # should be altered to filter for the line names instead.
         filtered_departures = [
-            d for d in departures
+            d for d in deduplicated_departures
             if not (
                 (self.exclude_ringbahn_clockwise and d.direction and "⟳" in d.direction) or
                 (self.exclude_ringbahn_counterclockwise and d.direction and "⟲" in d.direction)
             )
         ]
-        
-        # Get rid of duplicates
-        # Duplicates should only exist for the Ringbahn and filtering for both
-        # directions
-        deduplicated_departures = set(filtered_departures)
 
-        return sorted(deduplicated_departures, key=lambda d: d.timestamp)
+        return sorted(filtered_departures, key=lambda d: d.timestamp)
 
     def next_departure(self):
         if self.departures and isinstance(self.departures, list):
