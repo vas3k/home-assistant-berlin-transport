@@ -208,7 +208,7 @@ class TransportSensor(SensorEntity):
 
         # Ringbahn-Filter anwenden
         exclude_ringbahn_clockwise = self.config.get(CONF_FILTER_RINGBAHN_CLOCKWISE, False)
-        exclude_counterclockwise = self.config.get(CONF_FILTER_RINGBAHN_COUNTERCLOCKWISE, False)
+        exclude_ringbahn_counterclockwise = self.config.get(CONF_FILTER_RINGBAHN_COUNTERCLOCKWISE, False)
 
         # The API-Response contains the symbols ⟲ and ⟳ as part of the direction value, e.g. "direction": "Ringbahn S42 ⟲"
         # We filter for them instead of hard-coding the line names (S41/S42). Maybe this is more future proof, otherwise below code
