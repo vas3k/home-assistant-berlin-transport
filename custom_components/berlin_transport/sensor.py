@@ -28,6 +28,8 @@ from .const import (  # pylint: disable=unused-import
     CONF_DEPARTURES_DURATION,
     CONF_DEPARTURES_STOP_ID,
     CONF_DEPARTURES_WALKING_TIME,
+    CONF_FILTER_RINGBAHN_CLOCKWISE,
+    CONF_FILTER_RINGBAHN_COUNTERCLOCKWISE,
     CONF_SHOW_API_LINE_COLORS,
     CONF_TYPE_BUS,
     CONF_TYPE_EXPRESS,
@@ -204,6 +206,21 @@ class TransportSensor(SensorEntity):
             for direction in self.direction.split(','):
                 departures += self.fetch_directional_departure(direction)
 
+        # Ringbahn-Filter anwenden
+        exclude_ringbahn_clockwise = self.config.get(CONF_FILTER_RINGBAHN_CLOCKWISE, False)
+        exclude_counterclockwise = self.config.get(CONF_FILTER_RINGBAHN_COUNTERCLOCKWISE, False)
+
+        # The API-Response contains the symbols ⟲ and ⟳ as part of the direction value, e.g. "direction": "Ringbahn S42 ⟲"
+        # We filter for them instead of hard-coding the line names (S41/S42). Maybe this is more future proof, otherwise below code
+        # should be altered to filter for the line names instead.
+        filtered_departures = [
+            d for d in departures
+            if not (
+                (exclude_ringbahn_clockwise and d.direction and "⟳" in d.direction) or
+                (exclude_ringbahn_counterclockwise and d.direction and "⟲" in d.direction)
+            )
+        ]
+        
         # Get rid of duplicates
         # Duplicates should only exist for the Ringbahn and filtering for both
         # directions
