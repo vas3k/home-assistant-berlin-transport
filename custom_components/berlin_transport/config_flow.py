@@ -23,6 +23,8 @@ from .const import (
     CONF_DEPARTURES_EXCLUDED_STOPS,
     CONF_DEPARTURES_DURATION,
     CONF_DEPARTURES_WALKING_TIME,
+    CONF_FILTER_RINGBAHN_CLOCKWISE,
+    CONF_FILTER_RINGBAHN_COUNTERCLOCKWISE,
     CONF_SHOW_API_LINE_COLORS,
     DOMAIN, # noqa
 )
@@ -40,6 +42,8 @@ DATA_SCHEMA = vol.Schema(
         vol.Optional(CONF_DEPARTURES_EXCLUDED_STOPS): cv.string,
         vol.Optional(CONF_DEPARTURES_DURATION): cv.positive_int,
         vol.Optional(CONF_DEPARTURES_WALKING_TIME, default=1): cv.positive_int,
+        vol.Optional(CONF_FILTER_RINGBAHN_CLOCKWISE, default=False): cv.boolean,
+        vol.Optional(CONF_FILTER_RINGBAHN_COUNTERCLOCKWISE, default=False): cv.boolean,
         vol.Optional(CONF_SHOW_API_LINE_COLORS, default=False): cv.boolean,
         **TRANSPORT_TYPES_SCHEMA,
     }
