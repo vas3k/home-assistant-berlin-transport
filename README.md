@@ -29,6 +29,8 @@ The component consists of two parts:
     - Duration: Defines how many minutes into the future departures should be fetched. Default is 10 minutes.
     - Walking time: Enter the time needed to walk to the stop. This prevents unreachable departures from being shown.
     - Enable official VBB line colors: Optionally enable official VBB line colors. By default, predefined colors are used.
+    - Hide Ringbahn ⟳/⟲: Optionally hide Ringbahn services running clockwise or counter‑clockwise.  
+        - Example: Suppose you want to monitor departures from *Treptower Park*. You set the direction filter to *900077106 (S Sonnenallee)*, because you only want to see trains heading clockwise from *Treptower Park*. However, the Ringbahn S42 ⟲ (counter‑clockwise) will also eventually reach *S Sonnenallee*, so the BVG/VBB API will return those departures as well. This option lets you hide such entries.
     - Transport options: Choose which transport types (e.g., bus, ferry) to show or hide.
 1. Done. If you want to change options later on, just run through the steps again with the same stop. The previous entity will be overwritten automatically.
 
