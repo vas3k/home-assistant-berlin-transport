@@ -10,10 +10,10 @@
       },
       "stop": {
         "title": "Haltestelle auswählen",
-        "description": "Haltestelle auswählen",
+        "description": "Wähle die gewünschte Haltestelle aus der Liste der Suchergebnisse aus.",
         "data": {
-          "name": "Name der Haltestelle",
-          "stop_id": "ID der Haltestelle"
+          "name": "Haltestellenname",
+          "selected_stop": "Haltestelle (Name und ID)"
         }
       },
       "details": {
