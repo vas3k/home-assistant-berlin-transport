@@ -72,6 +72,8 @@ sensor:
         # excluded_stops: 900110502,900007102 # Exclude these stop IDs from the departures, duplicate departures may be shown for nearby stations
         # walking_time: 5 # Optional parameter with value in minutes that hide transport closer than N minutes
         # show_official_line_colors: true # Optionally enable official VBB line colors. By default predefined colors will be used.
+        # exclude_ringbahn_clockwise: true # Optionally hide Ringbahn services running clockwise
+        # exclude_ringbahn_counterclockwise: false # Optionally hide Ringbahn services running counter‑clockwise
         # duration: 30 # Optional (default 10), query departures for how many minutes from now?
 ```
 
