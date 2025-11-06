@@ -109,7 +109,9 @@ class TransportSensor(SensorEntity):
         self.walking_time: int = config.get(CONF_DEPARTURES_WALKING_TIME) or 1
         # we add +1 minute anyway to delete the "just gone" transport
         self.exclude_ringbahn_clockwise: bool = config.get(CONF_EXCLUDE_RINGBAHN_CLOCKWISE) or False
-        self.exclude_ringbahn_counterclockwise: bool = config.get(CONF_EXCLUDE_RINGBAHN_COUNTERCLOCKWISE) or False
+        self.exclude_ringbahn_counterclockwise: bool = (
+            config.get(CONF_EXCLUDE_RINGBAHN_COUNTERCLOCKWISE) or False
+        )
         self.show_api_line_colors: bool = config.get(CONF_SHOW_API_LINE_COLORS) or False
         self.session: CachedSession = CachedSession(
             backend='memory',
@@ -218,8 +220,10 @@ class TransportSensor(SensorEntity):
         deduplicated_departures = set(departures)
 
         # Step 3: Apply Ringbahn filter
-            # The API-Response contains the symbols ⟲ and ⟳ as part of the direction value, e.g. "direction": "Ringbahn S42 ⟲"
-            # We filter for just these chars, instead of hard-coding the whole string (Ringbahn S42 ⟲/Ringbahn S41 ⟳). Maybe this is more future proof.
+            # The API response includes the symbols ⟲ and ⟳ as part of the direction value,
+            # e.g. "direction": "Ringbahn S42 ⟲"
+            # We filter for just these chars, instead of hard-coding the full string
+            # (e.g. "Ringbahn S42 ⟲" / "Ringbahn S41 ⟳"). This may be more future-proof.
         
         filtered_departures = [
             d for d in deduplicated_departures
