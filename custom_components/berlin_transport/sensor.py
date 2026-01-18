@@ -105,6 +105,8 @@ class TransportSensor(SensorEntity):
         self.walking_time: int = config.get(CONF_DEPARTURES_WALKING_TIME) or 1
         # we add +1 minute anyway to delete the "just gone" transport
         self.show_api_line_colors: bool = config.get(CONF_SHOW_API_LINE_COLORS) or False
+        self._attr_latitude = None
+        self._attr_longitude = None
         self.session: CachedSession = CachedSession(
             backend='memory',
             cache_control=True,
@@ -183,6 +185,24 @@ class TransportSensor(SensorEntity):
             _LOGGER.error(f"API invalid JSON: {ex}")
             return []
 
+        departures_list = departures.get("departures", [])
+        if (
+            self._attr_latitude is None
+            and self._attr_longitude is None
+            and departures_list
+        ):
+            stop = departures_list[0].get("stop", {}).get("location", {})
+            latitude = stop.get("latitude")
+            longitude = stop.get("longitude")
+            if (
+                latitude is not None
+                and longitude is not None
+                and isinstance(latitude, (int, float))
+                and isinstance(longitude, (int, float))
+            ):
+                self._attr_latitude = latitude
+                self._attr_longitude = longitude
+
         if self.excluded_stops is None:
             excluded_stops = []
         else:
@@ -191,7 +211,7 @@ class TransportSensor(SensorEntity):
         # convert api data into objects
         return [
             Departure.from_dict(departure)
-            for departure in departures.get("departures")
+            for departure in departures_list
             if departure["stop"]["id"] not in excluded_stops
         ]
 
