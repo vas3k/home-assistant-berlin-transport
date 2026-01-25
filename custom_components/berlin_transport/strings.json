@@ -23,6 +23,7 @@
           "walking_time": "Walking time in minutes",
           "direction": "Filter departures by direction",
           "excluded_stops": "Exclude nearby stops with IDs",
+          "excluded_lines": "Exclude Lines by name",
           "show_official_line_colors": "Enable official VBB line colors",
           "duration": "Show departures for how many minutes?",
           "suburban": "Include S-Bahn",

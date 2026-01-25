@@ -60,6 +60,7 @@ sensor:
       - name: "S+U Schönhauser Allee" # free-form name, only for display purposes
         stop_id: 900110001 # actual Stop ID for the API
         # direction: 900110002,900007102 # Optional stop_id to limit departures for a specific direction (same URL as to find the stop_id), multiple Values can be specified using a comma separated list
+        # excluded_lines: S41 # Optional comma separated list of line names to exclude
         # walking_time: 5 # Optional parameter with value in minutes that hides transport closer than N minutes
         # suburban: false # Optionally hide transport options
         # show_official_line_colors: true # Optionally enable official VBB line colors. By default predefined colors will be used.

@@ -1,6 +1,7 @@
 # mypy: disable-error-code="attr-defined"
 
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
+
 from __future__ import annotations
 import logging
 from datetime import datetime, timedelta
@@ -25,6 +26,7 @@ from .const import (  # pylint: disable=unused-import
     CONF_DEPARTURES,
     CONF_DEPARTURES_DIRECTION,
     CONF_DEPARTURES_EXCLUDED_STOPS,
+    CONF_DEPARTURES_EXCLUDED_LINES,
     CONF_DEPARTURES_DURATION,
     CONF_DEPARTURES_STOP_ID,
     CONF_DEPARTURES_WALKING_TIME,
@@ -99,6 +101,7 @@ class TransportSensor(SensorEntity):
         self.config: dict = config
         self.stop_id: int = config[CONF_DEPARTURES_STOP_ID]
         self.excluded_stops: str | None = config.get(CONF_DEPARTURES_EXCLUDED_STOPS)
+        self.excluded_lines: str | None = config.get(CONF_DEPARTURES_EXCLUDED_LINES)
         self.sensor_name: str | None = config.get(CONF_DEPARTURES_NAME)
         self.direction: str | None = config.get(CONF_DEPARTURES_DIRECTION)
         self.duration: int | None = config.get(CONF_DEPARTURES_DURATION)
@@ -106,9 +109,7 @@ class TransportSensor(SensorEntity):
         # we add +1 minute anyway to delete the "just gone" transport
         self.show_api_line_colors: bool = config.get(CONF_SHOW_API_LINE_COLORS) or False
         self.session: CachedSession = CachedSession(
-            backend='memory',
-            cache_control=True,
-            expire_after=timedelta(days=1)
+            backend="memory", cache_control=True, expire_after=timedelta(days=1)
         )
 
     @property
@@ -150,9 +151,7 @@ class TransportSensor(SensorEntity):
             response = self.session.get(
                 url=f"{API_ENDPOINT}/stops/{self.stop_id}/departures",
                 params={
-                    "when": (
-                        datetime.utcnow() + timedelta(minutes=self.walking_time)
-                    ).isoformat(),
+                    "when": (datetime.utcnow() + timedelta(minutes=self.walking_time)).isoformat(),
                     "direction": direction,
                     "duration": self.duration,
                     "results": API_MAX_RESULTS,
@@ -188,11 +187,17 @@ class TransportSensor(SensorEntity):
         else:
             excluded_stops = self.excluded_stops.split(",")
 
+        if self.excluded_lines is None:
+            excluded_lines = []
+        else:
+            excluded_lines = self.excluded_lines.split(",")
+
         # convert api data into objects
         return [
             Departure.from_dict(departure)
             for departure in departures.get("departures")
             if departure["stop"]["id"] not in excluded_stops
+            and departure["line"]["name"] not in excluded_lines
         ]
 
     def fetch_departures(self) -> list[Departure]:
@@ -201,7 +206,7 @@ class TransportSensor(SensorEntity):
         if self.direction is None:
             departures += self.fetch_directional_departure(self.direction)
         else:
-            for direction in self.direction.split(','):
+            for direction in self.direction.split(","):
                 departures += self.fetch_directional_departure(direction)
 
         # Get rid of duplicates

@@ -23,6 +23,7 @@
           "walking_time": "Gehminuten zur Haltestelle",
           "direction": "Nur Abfahrten zu diesen (End-)Haltestellen",
           "excluded_stops": "Diese nahegelegenen Haltestellen ignorieren",
+          "excluded_lines": "Diese Linien ignorieren",
           "show_official_line_colors": "Offizielle VBB-Farben verwenden",
           "duration": "Zeitraum für Abfahrten (Minuten)",
           "suburban": "S-Bahn anzeigen",
