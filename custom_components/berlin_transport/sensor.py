@@ -63,6 +63,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
                 vol.Required(CONF_DEPARTURES_STOP_ID): cv.positive_int,
                 vol.Optional(CONF_DEPARTURES_DIRECTION): cv.string,
                 vol.Optional(CONF_DEPARTURES_EXCLUDED_STOPS): cv.string,
+                vol.Optional(CONF_DEPARTURES_EXCLUDED_LINES): cv.string,
                 vol.Optional(CONF_DEPARTURES_DURATION): cv.positive_int,
                 vol.Optional(CONF_DEPARTURES_WALKING_TIME, default=1): cv.positive_int,
                 vol.Optional(CONF_SHOW_API_LINE_COLORS, default=False): cv.boolean,
