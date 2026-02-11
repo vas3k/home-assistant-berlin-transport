@@ -91,15 +91,16 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    async_add_entities([TransportSensor(hass, config_entry.data)])
+    async_add_entities([TransportSensor(hass, config_entry.data, config_entry.entry_id)])
 
 
 class TransportSensor(SensorEntity):
     departures: list[Departure] = []
 
-    def __init__(self, hass: HomeAssistant, config: dict) -> None:
+    def __init__(self, hass: HomeAssistant, config: dict, entry_id: str | None = None) -> None:
         self.hass: HomeAssistant = hass
         self.config: dict = config
+        self._entry_id = entry_id
         self.stop_id: int = config[CONF_DEPARTURES_STOP_ID]
         self.excluded_stops: str | None = config.get(CONF_DEPARTURES_EXCLUDED_STOPS)
         self.excluded_lines: str | None = config.get(CONF_DEPARTURES_EXCLUDED_LINES)
@@ -126,7 +127,7 @@ class TransportSensor(SensorEntity):
 
     @property
     def unique_id(self) -> str:
-        return f"stop_{self.stop_id}_{self.sensor_name}_departures"
+        return self._entry_id or f"stop_{self.stop_id}_{self.sensor_name}_departures"
 
     @property
     def state(self) -> str:
