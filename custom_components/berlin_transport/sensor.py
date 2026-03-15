@@ -155,9 +155,13 @@ class TransportSensor(SensorEntity):
                     d for d in self.departures
                     if d.timestamp >= (datetime.now(d.timestamp.tzinfo) if d.timestamp.tzinfo)
                 ]
+                if not self.departures:
+                    self._attr_available = False
             else:
+                self._attr_available = False
                 self.departures = []
         else:
+            self._attr_available = True
             self.departures = departures
             self.last_update_success = now_utc
 
