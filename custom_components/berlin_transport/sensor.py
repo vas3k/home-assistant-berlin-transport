@@ -153,7 +153,7 @@ class TransportSensor(SensorEntity):
             if self.departures and self.last_update_success and (now_utc - self.last_update_success) <= FALLBACK_TIME:
                 self.departures = [
                     d for d in self.departures
-                    if d.timestamp >= (datetime.now(d.timestamp.tzinfo) if d.timestamp.tzinfo)
+                    if d.timestamp >= datetime.now(d.timestamp.tzinfo)
                 ]
                 if not self.departures:
                     self._attr_available = False
