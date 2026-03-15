@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta
 
-from requests.exceptions import HTTPError, InvalidJSONError, Timeout
+from requests.exceptions import ConnectionError, HTTPError, InvalidJSONError, Timeout
 from requests_cache import CachedSession
 import voluptuous as vol
 
@@ -23,6 +23,7 @@ from .const import (  # pylint: disable=unused-import
     SCAN_INTERVAL,  # noqa
     API_ENDPOINT,
     API_MAX_RESULTS,
+    FALLBACK_TIME,
     CONF_DEPARTURES,
     CONF_DEPARTURES_DIRECTION,
     CONF_DEPARTURES_EXCLUDED_STOPS,
@@ -112,6 +113,7 @@ class TransportSensor(SensorEntity):
         self.session: CachedSession = CachedSession(
             backend="memory", cache_control=True, expire_after=timedelta(days=1)
         )
+        self.last_update_success: datetime | None = None
 
     @property
     def name(self) -> str:
@@ -145,9 +147,21 @@ class TransportSensor(SensorEntity):
         }
 
     def update(self):
-        self.departures = self.fetch_departures()
+        departures = self.fetch_departures()
+        now_utc = datetime.utcnow()
+        if departures is None:
+            if self.departures and self.last_update_success and (now_utc - self.last_update_success) <= FALLBACK_TIME:
+                self.departures = [
+                    d for d in self.departures
+                    if d.timestamp >= (datetime.now(d.timestamp.tzinfo) if d.timestamp.tzinfo)
+                ]
+            else:
+                self.departures = []
+        else:
+            self.departures = departures
+            self.last_update_success = now_utc
 
-    def fetch_directional_departure(self, direction: str | None) -> list[Departure]:
+    def fetch_directional_departure(self, direction: str | None) -> list[Departure] | None:
         try:
             response = self.session.get(
                 url=f"{API_ENDPOINT}/stops/{self.stop_id}/departures",
@@ -167,12 +181,12 @@ class TransportSensor(SensorEntity):
                 timeout=30,
             )
             response.raise_for_status()
-        except HTTPError as ex:
+        except (HTTPError, ConnectionError) as ex:
             _LOGGER.warning(f"API error: {ex}")
-            return []
+            return None
         except Timeout as ex:
             _LOGGER.warning(f"API timeout: {ex}")
-            return []
+            return None
 
         _LOGGER.debug(f"OK: departures for {self.stop_id}: {response.text}")
 
@@ -181,7 +195,7 @@ class TransportSensor(SensorEntity):
             departures = response.json()
         except InvalidJSONError as ex:
             _LOGGER.error(f"API invalid JSON: {ex}")
-            return []
+            return None
 
         if self.excluded_stops is None:
             excluded_stops = []
@@ -201,14 +215,20 @@ class TransportSensor(SensorEntity):
             and departure["line"]["name"] not in excluded_lines
         ]
 
-    def fetch_departures(self) -> list[Departure]:
+    def fetch_departures(self) -> list[Departure] | None:
         departures = []
 
         if self.direction is None:
-            departures += self.fetch_directional_departure(self.direction)
+            res = self.fetch_directional_departure(self.direction)
+            if res is None:
+                return None
+            departures += res
         else:
             for direction in self.direction.split(","):
-                departures += self.fetch_directional_departure(direction)
+                res = self.fetch_directional_departure(direction)
+                if res is None:
+                    return None
+                departures += res
 
         # Get rid of duplicates
         # Duplicates should only exist for the Ringbahn and filtering for both
