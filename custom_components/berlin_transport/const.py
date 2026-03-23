@@ -2,6 +2,7 @@ from datetime import timedelta
 
 DOMAIN = "berlin_transport"
 SCAN_INTERVAL = timedelta(seconds=90)
+FALLBACK_TIME = timedelta(minutes=15)
 API_ENDPOINT = "https://v6.vbb.transport.rest"
 API_MAX_RESULTS = 15
 
