@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta
 
-from requests.exceptions import ConnectionError, HTTPError, InvalidJSONError, Timeout
+from requests.exceptions import HTTPError, InvalidJSONError, Timeout
 from requests_cache import CachedSession
 import voluptuous as vol
 
@@ -114,6 +114,7 @@ class TransportSensor(SensorEntity):
             backend="memory", cache_control=True, expire_after=timedelta(days=1)
         )
         self.last_update_success: datetime | None = None
+        self._attr_available: bool = True
 
     @property
     def name(self) -> str:
@@ -150,7 +151,11 @@ class TransportSensor(SensorEntity):
         departures = self.fetch_departures()
         now_utc = datetime.utcnow()
         if departures is None:
-            if self.departures and self.last_update_success and (now_utc - self.last_update_success) <= FALLBACK_TIME:
+            if (
+                self.departures and
+                self.last_update_success and
+                (now_utc - self.last_update_success) <= FALLBACK_TIME
+            ):
                 self.departures = [
                     d for d in self.departures
                     if d.timestamp >= datetime.now(d.timestamp.tzinfo)
