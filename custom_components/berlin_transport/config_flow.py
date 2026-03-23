@@ -183,3 +183,25 @@ class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             title=f"{data[CONF_DEPARTURES_NAME]} [{data[CONF_DEPARTURES_STOP_ID]}]",
             data=data,
         )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle reconfiguration."""
+        entry = self._get_reconfigure_entry()
+
+        if user_input is not None:
+            data = user_input
+            data[CONF_DEPARTURES_STOP_ID] = entry.data[CONF_DEPARTURES_STOP_ID]
+            data[CONF_DEPARTURES_NAME] = entry.data[CONF_DEPARTURES_NAME]
+            return self.async_update_reload_and_abort(
+                entry,
+                data=data,
+            )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=self.add_suggested_values_to_schema(
+                DATA_SCHEMA, dict(entry.data)
+            ),
+        )

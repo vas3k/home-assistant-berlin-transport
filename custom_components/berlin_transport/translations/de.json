@@ -34,6 +34,25 @@
           "express": "IC/ICE anzeigen",
           "regional": "RB/RE anzeigen"
         }
+      },
+      "reconfigure": {
+        "title": "Neu konfigurieren",
+        "description": "Sensoreinstellungen bearbeiten",
+        "data": {
+          "walking_time": "Gehminuten zur Haltestelle",
+          "direction": "Nur Abfahrten zu diesen (End-)Haltestellen",
+          "excluded_stops": "Diese nahegelegenen Haltestellen ignorieren",
+          "excluded_lines": "Diese Linien ignorieren",
+          "show_official_line_colors": "Offizielle VBB-Farben verwenden",
+          "duration": "Zeitraum für Abfahrten (Minuten)",
+          "suburban": "S-Bahn anzeigen",
+          "subway": "U-Bahn anzeigen",
+          "tram": "Tram anzeigen",
+          "bus": "Bus anzeigen",
+          "ferry": "Fähren anzeigen",
+          "express": "IC/ICE anzeigen",
+          "regional": "RB/RE anzeigen"
+        }
       }
     }
   }
