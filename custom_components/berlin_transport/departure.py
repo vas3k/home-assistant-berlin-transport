@@ -21,6 +21,7 @@ class Departure:
     location: tuple[float, float] | None = None
     cancelled: bool = False
     delay: int | None = None
+    warnings: list[dict] | None = None
 
     @classmethod
     def from_dict(cls, source):
@@ -45,6 +46,11 @@ class Departure:
             ],
             cancelled=source.get("cancelled", False),
             delay=source.get("delay", None),
+            warnings=[
+                {"id": r["id"], "summary": r["summary"]}
+                for r in source.get("remarks", [])
+                if r.get("type") == "warning" and r.get("summary")
+            ] or None,
         )
 
     def to_dict(self, show_api_line_colors: bool, walking_time: int):
@@ -60,6 +66,7 @@ class Departure:
             "color": color,
             "cancelled": self.cancelled,
             "delay": self.delay,
+            "warnings": self.warnings,
             "walking_time": walking_time,
         }
 
@@ -68,8 +75,10 @@ class Departure:
     def __hash__(self):
         # The value of colors and walking time doesn't matter, it just needs to
         # be the same for all evaluations of this function
-        items = self.to_dict(show_api_line_colors=False, walking_time=0).items()
+        d = self.to_dict(show_api_line_colors=False, walking_time=0)
+        # Warnings are dicts (not hashable), replace with a sorted tuple of IDs
+        d["warnings"] = tuple(sorted(w["id"] for w in d["warnings"])) if d["warnings"] else None
         # Dictionaries are not hashable, so use the items, sort them for
         # reproducibility. Convert it to a tuple, since lists are also not
         # hashable
-        return hash(tuple(sorted(items)))
+        return hash(tuple(sorted(d.items())))
