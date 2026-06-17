@@ -5,11 +5,13 @@ from __future__ import annotations
 import logging
 
 from typing import Any, Optional
-import requests
+import aiohttp
+import async_timeout
 import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers import selector
 
@@ -53,36 +55,27 @@ NAME_SCHEMA = vol.Schema(
     }
 )
 
-# IPv6 is broken, see: https://github.com/public-transport/transport.rest/issues/20
-requests.packages.urllib3.util.connection.HAS_IPV6 = False
 
-
-def get_stop_id(name) -> Optional[list[dict[str, Any]]]:
+async def get_stop_id(session: aiohttp.ClientSession, name) -> Optional[list[dict[str, Any]]]:
     try:
-        response = requests.get(
-            url=f"{API_ENDPOINT}/locations",
-            params={
-                "query": name,
-                "results": API_MAX_RESULTS,
-            },
-            timeout=30,
-        )
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as ex:
+        async with async_timeout.timeout(30):
+            response = await session.get(
+                url=f"{API_ENDPOINT}/locations",
+                params={
+                    "query": name,
+                    "results": API_MAX_RESULTS,
+                },
+            )
+            response.raise_for_status()
+            stops = await response.json()
+    except aiohttp.ClientError as ex:
         _LOGGER.warning(f"API error: {ex}")
         return []
-    except requests.exceptions.Timeout as ex:
-        _LOGGER.warning(f"API timeout: {ex}")
+    except Exception as ex:
+        _LOGGER.error(f"Unexpected error: {ex}")
         return []
 
-    _LOGGER.debug(f"OK: stops for {name}: {response.text}")
-
-    # parse JSON response
-    try:
-        stops = response.json()
-    except requests.exceptions.InvalidJSONError as ex:
-        _LOGGER.error(f"API invalid JSON: {ex}")
-        return []
+    _LOGGER.debug(f"OK: stops for {name}: {stops}")
 
     # convert api data into objects
     return [
@@ -130,9 +123,9 @@ class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 data_schema=NAME_SCHEMA,
                 errors={},
             )
-        self.data[CONF_FOUND_STOPS] = await self.hass.async_add_executor_job(
-            get_stop_id, user_input[CONF_SEARCH]
-        )
+        
+        session = async_get_clientsession(self.hass)
+        self.data[CONF_FOUND_STOPS] = await get_stop_id(session, user_input[CONF_SEARCH])
 
         _LOGGER.debug(
             f"OK: found stops for {user_input[CONF_SEARCH]}: {self.data[CONF_FOUND_STOPS]}"

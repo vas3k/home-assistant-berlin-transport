@@ -4,13 +4,15 @@
 
 from __future__ import annotations
 import logging
+from typing import Any, Mapping
 from datetime import datetime, timedelta
 
-from requests.exceptions import HTTPError, InvalidJSONError, Timeout
-from requests_cache import CachedSession
+import aiohttp
+import async_timeout
 import voluptuous as vol
 
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
@@ -84,7 +86,7 @@ async def async_setup_platform(
     """Set up the sensor platform."""
     if CONF_DEPARTURES in config:
         for departure in config[CONF_DEPARTURES]:
-            async_add_entities([TransportSensor(hass, departure)])
+            async_add_entities([TransportSensor(hass, departure)], True)
 
 
 async def async_setup_entry(
@@ -92,15 +94,20 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    async_add_entities([TransportSensor(hass, config_entry.data, config_entry.entry_id)])
+    async_add_entities([TransportSensor(hass, config_entry.data, config_entry.entry_id)], True)
 
 
 class TransportSensor(SensorEntity):
     departures: list[Departure] = []
 
-    def __init__(self, hass: HomeAssistant, config: dict, entry_id: str | None = None) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        config: Mapping[str, Any],
+        entry_id: str | None = None
+    ) -> None:
         self.hass: HomeAssistant = hass
-        self.config: dict = config
+        self.config = config
         self._entry_id = entry_id
         self.stop_id: int = config[CONF_DEPARTURES_STOP_ID]
         self.excluded_stops: str | None = config.get(CONF_DEPARTURES_EXCLUDED_STOPS)
@@ -111,9 +118,7 @@ class TransportSensor(SensorEntity):
         self.walking_time: int = config.get(CONF_DEPARTURES_WALKING_TIME) or 1
         # we add +1 minute anyway to delete the "just gone" transport
         self.show_api_line_colors: bool = config.get(CONF_SHOW_API_LINE_COLORS) or False
-        self.session: CachedSession = CachedSession(
-            backend="memory", cache_control=True, expire_after=timedelta(days=1)
-        )
+        self.session = async_get_clientsession(hass)
         self.last_update_success: datetime | None = None
         self._attr_available: bool = True
 
@@ -133,7 +138,7 @@ class TransportSensor(SensorEntity):
         return self._entry_id or f"stop_{self.stop_id}_{self.sensor_name}_departures"
 
     @property
-    def state(self) -> str:
+    def native_value(self) -> str:
         next_departure = self.next_departure()
         if next_departure:
             return f"Next {next_departure.line_name} at {next_departure.time}"
@@ -148,8 +153,8 @@ class TransportSensor(SensorEntity):
             ]
         }
 
-    def update(self):
-        departures = self.fetch_departures()
+    async def async_update(self):
+        departures = await self.fetch_departures()
         now_utc = datetime.utcnow()
         if departures is None:
             if (
@@ -171,41 +176,41 @@ class TransportSensor(SensorEntity):
             self.departures = departures
             self.last_update_success = now_utc
 
-    def fetch_directional_departure(self, direction: str | None) -> list[Departure] | None:
+    async def fetch_directional_departure(self, direction: str | None) -> list[Departure] | None:
         try:
-            response = self.session.get(
-                url=f"{API_ENDPOINT}/stops/{self.stop_id}/departures",
-                params={
-                    "when": (datetime.utcnow() + timedelta(minutes=self.walking_time)).isoformat(),
-                    "direction": direction,
-                    "duration": self.duration,
-                    "results": API_MAX_RESULTS,
-                    "suburban": self.config.get(CONF_TYPE_SUBURBAN) or False,
-                    "subway": self.config.get(CONF_TYPE_SUBWAY) or False,
-                    "tram": self.config.get(CONF_TYPE_TRAM) or False,
-                    "bus": self.config.get(CONF_TYPE_BUS) or False,
-                    "ferry": self.config.get(CONF_TYPE_FERRY) or False,
-                    "express": self.config.get(CONF_TYPE_EXPRESS) or False,
-                    "regional": self.config.get(CONF_TYPE_REGIONAL) or False,
-                },
-                timeout=30,
-            )
-            response.raise_for_status()
-        except (HTTPError, ConnectionError) as ex:
+            params: dict[str, Any] = {
+                "when": (datetime.utcnow() + timedelta(minutes=self.walking_time)).isoformat(),
+                "results": API_MAX_RESULTS,
+                "suburban": str(self.config.get(CONF_TYPE_SUBURBAN) or False).lower(),
+                "subway": str(self.config.get(CONF_TYPE_SUBWAY) or False).lower(),
+                "tram": str(self.config.get(CONF_TYPE_TRAM) or False).lower(),
+                "bus": str(self.config.get(CONF_TYPE_BUS) or False).lower(),
+                "ferry": str(self.config.get(CONF_TYPE_FERRY) or False).lower(),
+                "express": str(self.config.get(CONF_TYPE_EXPRESS) or False).lower(),
+                "regional": str(self.config.get(CONF_TYPE_REGIONAL) or False).lower(),
+            }
+            if self.duration is not None:
+                params["duration"] = self.duration
+            if direction is not None:
+                params["direction"] = direction
+
+            async with async_timeout.timeout(30):
+                response = await self.session.get(
+                    url=f"{API_ENDPOINT}/stops/{self.stop_id}/departures",
+                    params=params,
+                )
+                response.raise_for_status()
+                departures = await response.json()
+        except aiohttp.ClientError as ex:
             _LOGGER.warning(f"API error: {ex}")
             return None
-        except Timeout as ex:
-            _LOGGER.warning(f"API timeout: {ex}")
+        except Exception as ex:
+            _LOGGER.error(f"Unexpected error: {ex}")
             return None
 
-        _LOGGER.debug(f"OK: departures for {self.stop_id}: {response.text}")
-
-        # parse JSON response
-        try:
-            departures = response.json()
-        except InvalidJSONError as ex:
-            _LOGGER.error(f"API invalid JSON: {ex}")
-            return None
+        if not departures or "departures" not in departures:
+            _LOGGER.warning(f"No departures found for {self.stop_id}")
+            return []
 
         if self.excluded_stops is None:
             excluded_stops = []
@@ -220,22 +225,22 @@ class TransportSensor(SensorEntity):
         # convert api data into objects
         return [
             Departure.from_dict(departure)
-            for departure in departures.get("departures")
-            if departure["stop"]["id"] not in excluded_stops
-            and departure["line"]["name"] not in excluded_lines
+            for departure in (departures.get("departures") or [])
+            if departure.get("stop", {}).get("id") not in excluded_stops
+            and departure.get("line", {}).get("name") not in excluded_lines
         ]
 
-    def fetch_departures(self) -> list[Departure] | None:
+    async def fetch_departures(self) -> list[Departure] | None:
         departures = []
 
         if self.direction is None:
-            res = self.fetch_directional_departure(self.direction)
+            res = await self.fetch_directional_departure(self.direction)
             if res is None:
                 return None
             departures += res
         else:
             for direction in self.direction.split(","):
-                res = self.fetch_directional_departure(direction)
+                res = await self.fetch_directional_departure(direction)
                 if res is None:
                     return None
                 departures += res
