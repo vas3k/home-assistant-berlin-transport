@@ -1,5 +1,10 @@
 DOMAIN = "berlin_transport"
 
+# Subentry type for stops added under a hub entry.
+SUBENTRY_TYPE_STOP = "stop"
+# Stable entity unique id, stored in subentry data (preserved across migration).
+CONF_UNIQUE_ID = "unique_id"
+
 # Defaults, used when the matching option is not configured on the entry.
 DEFAULT_SCAN_INTERVAL = 90  # seconds
 DEFAULT_FALLBACK_TIME = 15  # minutes

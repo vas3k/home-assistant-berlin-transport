@@ -2,56 +2,76 @@
   "config": {
     "step": {
       "user": {
-        "title": "Search Stop",
-        "description": "Enter the Name of the Stop to find the Stop ID",
+        "title": "Add Hub",
+        "description": "Configure the API endpoint and the settings shared by all stops added under this hub",
         "data": {
-          "search": "Name of the Stop"
+          "api_endpoint": "API endpoint URL",
+          "api_max_results": "Maximum number of results per request",
+          "fallback_time": "Fallback time in minutes (keep showing last results when the API is unavailable)"
         }
+      }
+    }
+  },
+  "config_subentries": {
+    "stop": {
+      "initiate_flow": {
+        "user": "Add stop",
+        "reconfigure": "Reconfigure stop"
       },
-      "stop": {
-        "title": "Select Stop",
-        "description": "Select the desired Stop",
-        "data": {
-          "name": "Name of the Stop",
-          "selected_stop": "ID of the Stop"
-        }
-      },
-      "details": {
-        "title": "Further Details",
-        "description": "Add further details",
-        "data": {
-          "walking_time": "Walking time in minutes",
-          "direction": "Filter departures by direction",
-          "excluded_stops": "Exclude nearby stops with IDs",
-          "excluded_lines": "Exclude Lines by name",
-          "show_official_line_colors": "Enable official VBB line colors",
-          "duration": "Show departures for how many minutes?",
-          "suburban": "Include S-Bahn",
-          "subway": "Include U-Bahn",
-          "tram": "Include Tram",
-          "bus": "Include Bus",
-          "ferry": "Include Ferry",
-          "express": "Include IC/ICE",
-          "regional": "Include RB/RE"
-        }
-      },
-      "reconfigure": {
-        "title": "Reconfigure",
-        "description": "Update sensor settings",
-        "data": {
-          "walking_time": "Walking time in minutes",
-          "direction": "Filter departures by direction",
-          "excluded_stops": "Exclude nearby stops with IDs",
-          "excluded_lines": "Exclude Lines by name",
-          "show_official_line_colors": "Enable official VBB line colors",
-          "duration": "Show departures for how many minutes?",
-          "suburban": "Include S-Bahn",
-          "subway": "Include U-Bahn",
-          "tram": "Include Tram",
-          "bus": "Include Bus",
-          "ferry": "Include Ferry",
-          "express": "Include IC/ICE",
-          "regional": "Include RB/RE"
+      "entry_type": "Stop",
+      "step": {
+        "user": {
+          "title": "Search Stop",
+          "description": "Enter the Name of the Stop to find the Stop ID",
+          "data": {
+            "search": "Name of the Stop"
+          }
+        },
+        "stop": {
+          "title": "Select Stop",
+          "description": "Select the desired Stop",
+          "data": {
+            "name": "Name of the Stop",
+            "selected_stop": "ID of the Stop"
+          }
+        },
+        "details": {
+          "title": "Further Details",
+          "description": "Add further details",
+          "data": {
+            "walking_time": "Walking time in minutes",
+            "direction": "Filter departures by direction",
+            "excluded_stops": "Exclude nearby stops with IDs",
+            "excluded_lines": "Exclude Lines by name",
+            "show_official_line_colors": "Enable official VBB line colors",
+            "duration": "Show departures for how many minutes?",
+            "suburban": "Include S-Bahn",
+            "subway": "Include U-Bahn",
+            "tram": "Include Tram",
+            "bus": "Include Bus",
+            "ferry": "Include Ferry",
+            "express": "Include IC/ICE",
+            "regional": "Include RB/RE"
+          }
+        },
+        "reconfigure": {
+          "title": "Reconfigure",
+          "description": "Update sensor settings",
+          "data": {
+            "walking_time": "Walking time in minutes",
+            "direction": "Filter departures by direction",
+            "excluded_stops": "Exclude nearby stops with IDs",
+            "excluded_lines": "Exclude Lines by name",
+            "show_official_line_colors": "Enable official VBB line colors",
+            "duration": "Show departures for how many minutes?",
+            "suburban": "Include S-Bahn",
+            "subway": "Include U-Bahn",
+            "tram": "Include Tram",
+            "bus": "Include Bus",
+            "ferry": "Include Ferry",
+            "express": "Include IC/ICE",
+            "regional": "Include RB/RE"
+          }
         }
       }
     }
