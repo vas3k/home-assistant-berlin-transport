@@ -1,41 +1,40 @@
 # mypy: disable-error-code="attr-defined,call-arg"
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
+
 from __future__ import annotations
 
 import logging
-
 from typing import Any, Optional
+
 import aiohttp
 import async_timeout
+import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers import selector
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
     CONF_API_ENDPOINT,
     CONF_API_MAX_RESULTS,
+    CONF_DEPARTURES_DIRECTION,
+    CONF_DEPARTURES_DURATION,
+    CONF_DEPARTURES_EXCLUDED_LINES,
+    CONF_DEPARTURES_EXCLUDED_STOPS,
+    CONF_DEPARTURES_NAME,
+    CONF_DEPARTURES_STOP_ID,
+    CONF_DEPARTURES_WALKING_TIME,
     CONF_FALLBACK_TIME,
+    CONF_SELECTED_STOP,
+    CONF_SHOW_API_LINE_COLORS,
     DEFAULT_API_ENDPOINT,
     DEFAULT_API_MAX_RESULTS,
     DEFAULT_FALLBACK_TIME,
-    CONF_DEPARTURES_STOP_ID,
-    CONF_DEPARTURES_NAME,
-    CONF_SELECTED_STOP,
-    CONF_DEPARTURES_DIRECTION,
-    CONF_DEPARTURES_EXCLUDED_STOPS,
-    CONF_DEPARTURES_EXCLUDED_LINES,
-    CONF_DEPARTURES_DURATION,
-    CONF_DEPARTURES_WALKING_TIME,
-    CONF_SHOW_API_LINE_COLORS,
+    DOMAIN,  # noqa
     SUBENTRY_TYPE_STOP,
-    DOMAIN, # noqa
 )
-
 from .sensor import TRANSPORT_TYPES_SCHEMA
 
 _LOGGER = logging.getLogger(__name__)
@@ -119,7 +118,7 @@ def list_stops(stops) -> Optional[vol.Schema]:
                         f"{stop[CONF_DEPARTURES_NAME]} [{stop[CONF_DEPARTURES_STOP_ID]}]"
                         for stop in stops
                     ],
-                    mode=selector.SelectSelectorMode.DROPDOWN
+                    mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             )
         }
@@ -146,7 +145,8 @@ class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     @classmethod
     @callback
     def async_get_supported_subentry_types(
-        cls, config_entry: config_entries.ConfigEntry  # pylint: disable=unused-argument
+        cls,
+        config_entry: config_entries.ConfigEntry,  # pylint: disable=unused-argument
     ) -> dict[str, type[config_entries.ConfigSubentryFlow]]:
         """Stops are added as subentries under the hub."""
         return {SUBENTRY_TYPE_STOP: StopSubentryFlowHandler}
@@ -267,7 +267,9 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
         )
 
 
-class OptionsFlowHandler(config_entries.OptionsFlow):  # pylint: disable=too-few-public-methods
+class OptionsFlowHandler(
+    config_entries.OptionsFlow
+):  # pylint: disable=too-few-public-methods
     """Edit the hub-level (shared) settings for an existing entry."""
 
     async def async_step_init(

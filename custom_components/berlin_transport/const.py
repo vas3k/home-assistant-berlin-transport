@@ -55,21 +55,21 @@ TRANSPORT_TYPE_VISUALS = {
     CONF_TYPE_BUS: {
         "code": "BUS",
         "icon": "mdi:bus",
-        "color": "#A5027D"
+        "color": "#A5027D",
     },
     CONF_TYPE_FERRY: {
         "code": "F",
         "icon": "mdi:ferry",
-        "color": "#0080BA"
+        "color": "#0080BA",
     },
     CONF_TYPE_EXPRESS: {
         "code": "Train",
         "icon": "mdi:train",
-        "color": "#4D4D4D"
+        "color": "#4D4D4D",
     },
     CONF_TYPE_REGIONAL: {
         "code": "RE",
         "icon": "mdi:train",
-        "color": "#F01414"
-    }
+        "color": "#F01414",
+    },
 }

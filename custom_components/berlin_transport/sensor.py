@@ -3,41 +3,37 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
 from __future__ import annotations
+
 import logging
-from typing import Any, Mapping
 from datetime import datetime, timedelta
+from typing import Any, Mapping
 
 import aiohttp
 import async_timeout
+import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-
+from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import (
     AddConfigEntryEntitiesCallback,
     AddEntitiesCallback,
 )
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.components.sensor import PLATFORM_SCHEMA
 
 from .const import (
-    DEFAULT_API_ENDPOINT,
-    DEFAULT_API_MAX_RESULTS,
-    DEFAULT_FALLBACK_TIME,
-    DEFAULT_SCAN_INTERVAL,
     CONF_API_ENDPOINT,
     CONF_API_MAX_RESULTS,
-    CONF_FALLBACK_TIME,
     CONF_DEPARTURES,
     CONF_DEPARTURES_DIRECTION,
-    CONF_DEPARTURES_EXCLUDED_STOPS,
-    CONF_DEPARTURES_EXCLUDED_LINES,
     CONF_DEPARTURES_DURATION,
+    CONF_DEPARTURES_EXCLUDED_LINES,
+    CONF_DEPARTURES_EXCLUDED_STOPS,
+    CONF_DEPARTURES_NAME,
     CONF_DEPARTURES_STOP_ID,
     CONF_DEPARTURES_WALKING_TIME,
+    CONF_FALLBACK_TIME,
     CONF_SHOW_API_LINE_COLORS,
     CONF_TYPE_BUS,
     CONF_TYPE_EXPRESS,
@@ -46,10 +42,13 @@ from .const import (
     CONF_TYPE_SUBURBAN,
     CONF_TYPE_SUBWAY,
     CONF_TYPE_TRAM,
-    CONF_DEPARTURES_NAME,
     CONF_UNIQUE_ID,
-    SUBENTRY_TYPE_STOP,
+    DEFAULT_API_ENDPOINT,
+    DEFAULT_API_MAX_RESULTS,
+    DEFAULT_FALLBACK_TIME,
     DEFAULT_ICON,
+    DEFAULT_SCAN_INTERVAL,
+    SUBENTRY_TYPE_STOP,
 )
 from .departure import Departure
 
@@ -127,13 +126,15 @@ class TransportSensor(SensorEntity):
         self,
         hass: HomeAssistant,
         config: Mapping[str, Any],
-        entry_id: str | None = None
+        entry_id: str | None = None,
     ) -> None:
         self.hass: HomeAssistant = hass
         self.config = config
         self._entry_id = entry_id
         self.api_endpoint: str = config.get(CONF_API_ENDPOINT) or DEFAULT_API_ENDPOINT
-        self.api_max_results: int = config.get(CONF_API_MAX_RESULTS) or DEFAULT_API_MAX_RESULTS
+        self.api_max_results: int = (
+            config.get(CONF_API_MAX_RESULTS) or DEFAULT_API_MAX_RESULTS
+        )
         self.fallback_time: timedelta = timedelta(
             minutes=config.get(CONF_FALLBACK_TIME) or DEFAULT_FALLBACK_TIME
         )
@@ -186,12 +187,13 @@ class TransportSensor(SensorEntity):
         current_time = datetime.now().astimezone()
         if departures is None:
             if (
-                self.departures and
-                self.last_update_success and
-                (current_time - self.last_update_success) <= self.fallback_time
+                self.departures
+                and self.last_update_success
+                and (current_time - self.last_update_success) <= self.fallback_time
             ):
                 self.departures = [
-                    d for d in self.departures
+                    d
+                    for d in self.departures
                     if d.timestamp >= datetime.now().astimezone()
                 ]
                 if not self.departures:
@@ -204,7 +206,9 @@ class TransportSensor(SensorEntity):
             self.departures = departures
             self.last_update_success = current_time
 
-    async def fetch_directional_departure(self, direction: str | None) -> list[Departure] | None:
+    async def fetch_directional_departure(
+        self, direction: str | None
+    ) -> list[Departure] | None:
         try:
             params: dict[str, Any] = {
                 "when": (

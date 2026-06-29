@@ -1,16 +1,17 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
+
 from __future__ import annotations
 
 import logging
 from types import MappingProxyType
 
-from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry, ConfigSubentry
 from homeassistant.const import Platform
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 
 from .const import (
-    DOMAIN, # noqa
+    DOMAIN,  # noqa
     CONF_API_ENDPOINT,
     CONF_API_MAX_RESULTS,
     CONF_FALLBACK_TIME,
@@ -76,6 +77,7 @@ async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) 
 
 
 def setup(
-    hass: HomeAssistant, config: ConfigType  # pylint: disable=unused-argument
+    hass: HomeAssistant,  # pylint: disable=unused-argument
+    config: ConfigType,  # pylint: disable=unused-argument
 ) -> bool:
     return True
