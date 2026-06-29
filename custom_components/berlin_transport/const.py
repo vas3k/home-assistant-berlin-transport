@@ -1,10 +1,15 @@
-from datetime import timedelta
-
 DOMAIN = "berlin_transport"
-SCAN_INTERVAL = timedelta(seconds=90)
-FALLBACK_TIME = timedelta(minutes=15)
-API_ENDPOINT = "https://v6.vbb.transport.rest"
-API_MAX_RESULTS = 15
+
+# Defaults, used when the matching option is not configured on the entry.
+DEFAULT_SCAN_INTERVAL = 90  # seconds
+DEFAULT_FALLBACK_TIME = 15  # minutes
+DEFAULT_API_ENDPOINT = "https://v6.vbb.transport.rest"
+DEFAULT_API_MAX_RESULTS = 15
+
+# Option keys (stored in ConfigEntry.options, edited via the options flow)
+CONF_API_ENDPOINT = "api_endpoint"
+CONF_API_MAX_RESULTS = "api_max_results"
+CONF_FALLBACK_TIME = "fallback_time"
 
 DEFAULT_ICON = "mdi:clock"
 

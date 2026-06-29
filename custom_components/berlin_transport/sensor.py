@@ -20,12 +20,14 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 
-from .const import (  # pylint: disable=unused-import
-    DOMAIN,  # noqa
-    SCAN_INTERVAL,  # noqa
-    API_ENDPOINT,
-    API_MAX_RESULTS,
-    FALLBACK_TIME,
+from .const import (
+    DEFAULT_API_ENDPOINT,
+    DEFAULT_API_MAX_RESULTS,
+    DEFAULT_FALLBACK_TIME,
+    DEFAULT_SCAN_INTERVAL,
+    CONF_API_ENDPOINT,
+    CONF_API_MAX_RESULTS,
+    CONF_FALLBACK_TIME,
     CONF_DEPARTURES,
     CONF_DEPARTURES_DIRECTION,
     CONF_DEPARTURES_EXCLUDED_STOPS,
@@ -47,6 +49,9 @@ from .const import (  # pylint: disable=unused-import
 from .departure import Departure
 
 _LOGGER = logging.getLogger(__name__)
+
+# Home Assistant polls every entity on this fixed interval.
+SCAN_INTERVAL = timedelta(seconds=DEFAULT_SCAN_INTERVAL)
 
 TRANSPORT_TYPES_SCHEMA = {
     vol.Optional(CONF_TYPE_SUBURBAN, default=True): cv.boolean,
@@ -94,7 +99,9 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    async_add_entities([TransportSensor(hass, config_entry.data, config_entry.entry_id)], True)
+    # Options (edited via the options flow) override the values stored at setup.
+    config = {**config_entry.data, **config_entry.options}
+    async_add_entities([TransportSensor(hass, config, config_entry.entry_id)], True)
 
 
 class TransportSensor(SensorEntity):
@@ -109,6 +116,11 @@ class TransportSensor(SensorEntity):
         self.hass: HomeAssistant = hass
         self.config = config
         self._entry_id = entry_id
+        self.api_endpoint: str = config.get(CONF_API_ENDPOINT) or DEFAULT_API_ENDPOINT
+        self.api_max_results: int = config.get(CONF_API_MAX_RESULTS) or DEFAULT_API_MAX_RESULTS
+        self.fallback_time: timedelta = timedelta(
+            minutes=config.get(CONF_FALLBACK_TIME) or DEFAULT_FALLBACK_TIME
+        )
         self.stop_id: int = config[CONF_DEPARTURES_STOP_ID]
         self.excluded_stops: str | None = config.get(CONF_DEPARTURES_EXCLUDED_STOPS)
         self.excluded_lines: str | None = config.get(CONF_DEPARTURES_EXCLUDED_LINES)
@@ -160,7 +172,7 @@ class TransportSensor(SensorEntity):
             if (
                 self.departures and
                 self.last_update_success and
-                (current_time - self.last_update_success) <= FALLBACK_TIME
+                (current_time - self.last_update_success) <= self.fallback_time
             ):
                 self.departures = [
                     d for d in self.departures
@@ -182,7 +194,7 @@ class TransportSensor(SensorEntity):
                 "when": (
                     datetime.now().astimezone() + timedelta(minutes=self.walking_time)
                 ).isoformat(),
-                "results": API_MAX_RESULTS,
+                "results": self.api_max_results,
                 "suburban": str(self.config.get(CONF_TYPE_SUBURBAN) or False).lower(),
                 "subway": str(self.config.get(CONF_TYPE_SUBWAY) or False).lower(),
                 "tram": str(self.config.get(CONF_TYPE_TRAM) or False).lower(),
@@ -198,7 +210,7 @@ class TransportSensor(SensorEntity):
 
             async with async_timeout.timeout(30):
                 response = await self.session.get(
-                    url=f"{API_ENDPOINT}/stops/{self.stop_id}/departures",
+                    url=f"{self.api_endpoint}/stops/{self.stop_id}/departures",
                     params=params,
                 )
                 response.raise_for_status()

@@ -10,14 +10,19 @@ import async_timeout
 import voluptuous as vol
 
 from homeassistant import config_entries
+from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers import selector
 
 from .const import (
-    API_ENDPOINT,
-    API_MAX_RESULTS,
+    CONF_API_ENDPOINT,
+    CONF_API_MAX_RESULTS,
+    CONF_FALLBACK_TIME,
+    DEFAULT_API_ENDPOINT,
+    DEFAULT_API_MAX_RESULTS,
+    DEFAULT_FALLBACK_TIME,
     CONF_DEPARTURES_STOP_ID,
     CONF_DEPARTURES_NAME,
     CONF_SELECTED_STOP,
@@ -55,15 +60,27 @@ NAME_SCHEMA = vol.Schema(
     }
 )
 
+OPTIONS_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_API_ENDPOINT, default=DEFAULT_API_ENDPOINT): cv.string,
+        vol.Optional(
+            CONF_API_MAX_RESULTS, default=DEFAULT_API_MAX_RESULTS
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_FALLBACK_TIME, default=DEFAULT_FALLBACK_TIME
+        ): cv.positive_int,
+    }
+)
+
 
 async def get_stop_id(session: aiohttp.ClientSession, name) -> Optional[list[dict[str, Any]]]:
     try:
         async with async_timeout.timeout(30):
             response = await session.get(
-                url=f"{API_ENDPOINT}/locations",
+                url=f"{DEFAULT_API_ENDPOINT}/locations",
                 params={
                     "query": name,
-                    "results": API_MAX_RESULTS,
+                    "results": DEFAULT_API_MAX_RESULTS,
                 },
             )
             response.raise_for_status()
@@ -113,6 +130,14 @@ class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Init the ConfigFlow."""
         self.data: dict[str, Any] = {}
 
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,  # pylint: disable=unused-argument
+    ) -> OptionsFlowHandler:
+        """Get the options flow for this handler."""
+        return OptionsFlowHandler()
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
@@ -123,7 +148,7 @@ class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 data_schema=NAME_SCHEMA,
                 errors={},
             )
-        
+
         session = async_get_clientsession(self.hass)
         self.data[CONF_FOUND_STOPS] = await get_stop_id(session, user_input[CONF_SEARCH])
 
@@ -196,5 +221,23 @@ class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="reconfigure",
             data_schema=self.add_suggested_values_to_schema(
                 DATA_SCHEMA, dict(entry.data)
+            ),
+        )
+
+
+class OptionsFlowHandler(config_entries.OptionsFlow):  # pylint: disable=too-few-public-methods
+    """Handle the options (advanced settings) for an existing entry."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Manage the options."""
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=self.add_suggested_values_to_schema(
+                OPTIONS_SCHEMA, self.config_entry.options
             ),
         )
