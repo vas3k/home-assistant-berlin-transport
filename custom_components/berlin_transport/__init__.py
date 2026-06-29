@@ -7,7 +7,7 @@ from homeassistant.const import Platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN, SCAN_INTERVAL  # noqa
+from .const import DOMAIN  # noqa
 
 PLATFORMS = [Platform.SENSOR]
 

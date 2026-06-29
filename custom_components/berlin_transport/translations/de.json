@@ -55,5 +55,18 @@
         }
       }
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Erweiterte Einstellungen",
+        "description": "Abfrage-Verhalten und API-Endpunkt für diese Integration anpassen",
+        "data": {
+          "api_endpoint": "API-Endpunkt-URL",
+          "api_max_results": "Maximale Ergebnisse pro Anfrage",
+          "fallback_time": "Überbrückungszeit in Minuten (für diese Zeit werden die letzten Ergebnisse angezeigt, wenn die API nicht erreichbar ist)"
+        }
+      }
+    }
   }
 }

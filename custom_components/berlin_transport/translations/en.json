@@ -55,5 +55,18 @@
         }
       }
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Advanced Settings",
+        "description": "Change polling and API endpoint for this integration",
+        "data": {
+          "api_endpoint": "API endpoint URL",
+          "api_max_results": "Maximum number of results per request",
+          "fallback_time": "Fallback time in minutes (keep showing the last fetched departures for this time while the API is unavailable)"
+        }
+      }
+    }
   }
 }
