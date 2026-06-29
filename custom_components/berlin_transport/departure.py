@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from .const import TRANSPORT_TYPE_VISUALS, DEFAULT_ICON
+from .const import DEFAULT_ICON, TRANSPORT_TYPE_VISUALS
 
 
 @dataclass
@@ -58,7 +58,8 @@ class Departure:
                 {"id": r["id"], "summary": r["summary"]}
                 for r in source.get("remarks", [])
                 if r.get("type") == "warning" and r.get("summary")
-            ] or None,
+            ]
+            or None,
         )
 
     def to_dict(self, show_api_line_colors: bool, walking_time: int):
@@ -85,7 +86,9 @@ class Departure:
         # be the same for all evaluations of this function
         d = self.to_dict(show_api_line_colors=False, walking_time=0)
         # Warnings are dicts (not hashable), replace with a sorted tuple of IDs
-        d["warnings"] = tuple(sorted(w["id"] for w in d["warnings"])) if d["warnings"] else None
+        d["warnings"] = (
+            tuple(sorted(w["id"] for w in d["warnings"])) if d["warnings"] else None
+        )
         # Dictionaries are not hashable, so use the items, sort them for
         # reproducibility. Convert it to a tuple, since lists are also not
         # hashable
