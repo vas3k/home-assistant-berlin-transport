@@ -31,12 +31,12 @@ class Departure:
         when = source.get("when") or source.get("plannedWhen")
         if when is None:
             # Fallback if no time is provided
-            timestamp = datetime.now()
+            timestamp = datetime.now().astimezone()
         else:
             try:
-                timestamp = datetime.fromisoformat(when)
+                timestamp = datetime.fromisoformat(when).astimezone()
             except ValueError:
-                timestamp = datetime.now()
+                timestamp = datetime.now().astimezone()
 
         return cls(
             trip_id=source.get("tripId", "unknown"),

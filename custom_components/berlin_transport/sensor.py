@@ -155,16 +155,16 @@ class TransportSensor(SensorEntity):
 
     async def async_update(self):
         departures = await self.fetch_departures()
-        now_utc = datetime.utcnow()
+        current_time = datetime.now().astimezone()
         if departures is None:
             if (
                 self.departures and
                 self.last_update_success and
-                (now_utc - self.last_update_success) <= FALLBACK_TIME
+                (current_time - self.last_update_success) <= FALLBACK_TIME
             ):
                 self.departures = [
                     d for d in self.departures
-                    if d.timestamp >= datetime.now(d.timestamp.tzinfo)
+                    if d.timestamp >= datetime.now().astimezone()
                 ]
                 if not self.departures:
                     self._attr_available = False
@@ -174,12 +174,14 @@ class TransportSensor(SensorEntity):
         else:
             self._attr_available = True
             self.departures = departures
-            self.last_update_success = now_utc
+            self.last_update_success = current_time
 
     async def fetch_directional_departure(self, direction: str | None) -> list[Departure] | None:
         try:
             params: dict[str, Any] = {
-                "when": (datetime.utcnow() + timedelta(minutes=self.walking_time)).isoformat(),
+                "when": (
+                    datetime.now().astimezone() + timedelta(minutes=self.walking_time)
+                ).isoformat(),
                 "results": API_MAX_RESULTS,
                 "suburban": str(self.config.get(CONF_TYPE_SUBURBAN) or False).lower(),
                 "subway": str(self.config.get(CONF_TYPE_SUBWAY) or False).lower(),
