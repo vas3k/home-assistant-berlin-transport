@@ -32,6 +32,7 @@ from .const import (
     CONF_DEPARTURES_DURATION,
     CONF_DEPARTURES_WALKING_TIME,
     CONF_SHOW_API_LINE_COLORS,
+    SUBENTRY_TYPE_STOP,
     DOMAIN, # noqa
 )
 
@@ -41,6 +42,19 @@ _LOGGER = logging.getLogger(__name__)
 
 CONF_SEARCH = "search"
 CONF_FOUND_STOPS = "found_stops"
+
+# The hub holds the API endpoint and the settings shared by all its stops.
+HUB_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_API_ENDPOINT, default=DEFAULT_API_ENDPOINT): cv.string,
+        vol.Optional(
+            CONF_API_MAX_RESULTS, default=DEFAULT_API_MAX_RESULTS
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_FALLBACK_TIME, default=DEFAULT_FALLBACK_TIME
+        ): cv.positive_int,
+    }
+)
 
 DATA_SCHEMA = vol.Schema(
     {
@@ -60,27 +74,20 @@ NAME_SCHEMA = vol.Schema(
     }
 )
 
-OPTIONS_SCHEMA = vol.Schema(
-    {
-        vol.Optional(CONF_API_ENDPOINT, default=DEFAULT_API_ENDPOINT): cv.string,
-        vol.Optional(
-            CONF_API_MAX_RESULTS, default=DEFAULT_API_MAX_RESULTS
-        ): cv.positive_int,
-        vol.Optional(
-            CONF_FALLBACK_TIME, default=DEFAULT_FALLBACK_TIME
-        ): cv.positive_int,
-    }
-)
 
-
-async def get_stop_id(session: aiohttp.ClientSession, name) -> Optional[list[dict[str, Any]]]:
+async def get_stop_id(
+    session: aiohttp.ClientSession,
+    name,
+    api_endpoint: str = DEFAULT_API_ENDPOINT,
+    max_results: int = DEFAULT_API_MAX_RESULTS,
+) -> Optional[list[dict[str, Any]]]:
     try:
         async with async_timeout.timeout(30):
             response = await session.get(
-                url=f"{DEFAULT_API_ENDPOINT}/locations",
+                url=f"{api_endpoint}/locations",
                 params={
                     "query": name,
-                    "results": DEFAULT_API_MAX_RESULTS,
+                    "results": max_results,
                 },
             )
             response.raise_for_status()
@@ -122,13 +129,11 @@ def list_stops(stops) -> Optional[vol.Schema]:
 
 
 class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
-    VERSION = 1
+    """Create a hub entry that holds the API endpoint and shared settings."""
+
+    VERSION = 2
 
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
-
-    def __init__(self) -> None:
-        """Init the ConfigFlow."""
-        self.data: dict[str, Any] = {}
 
     @staticmethod
     @callback
@@ -138,10 +143,50 @@ class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Get the options flow for this handler."""
         return OptionsFlowHandler()
 
+    @classmethod
+    @callback
+    def async_get_supported_subentry_types(
+        cls, config_entry: config_entries.ConfigEntry  # pylint: disable=unused-argument
+    ) -> dict[str, type[config_entries.ConfigSubentryFlow]]:
+        """Stops are added as subentries under the hub."""
+        return {SUBENTRY_TYPE_STOP: StopSubentryFlowHandler}
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle the initial step."""
+        """Create the hub."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="user",
+                data_schema=HUB_SCHEMA,
+                errors={},
+            )
+
+        return self.async_create_entry(
+            title=user_input[CONF_API_ENDPOINT],
+            data={},
+            options=user_input,
+        )
+
+
+class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
+    """Add or reconfigure a single stop under a hub entry."""
+
+    def __init__(self) -> None:
+        self.data: dict[str, Any] = {}
+
+    def _hub_search_args(self) -> tuple[str, int]:
+        """Endpoint and max results inherited from the parent hub entry."""
+        entry = self._get_entry()
+        return (
+            entry.options.get(CONF_API_ENDPOINT) or DEFAULT_API_ENDPOINT,
+            entry.options.get(CONF_API_MAX_RESULTS) or DEFAULT_API_MAX_RESULTS,
+        )
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Search for a stop using the hub's API endpoint."""
         if user_input is None:
             return self.async_show_form(
                 step_id="user",
@@ -149,19 +194,17 @@ class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 errors={},
             )
 
+        api_endpoint, max_results = self._hub_search_args()
         session = async_get_clientsession(self.hass)
-        self.data[CONF_FOUND_STOPS] = await get_stop_id(session, user_input[CONF_SEARCH])
-
-        _LOGGER.debug(
-            f"OK: found stops for {user_input[CONF_SEARCH]}: {self.data[CONF_FOUND_STOPS]}"
+        self.data[CONF_FOUND_STOPS] = await get_stop_id(
+            session, user_input[CONF_SEARCH], api_endpoint, max_results
         )
-
         return await self.async_step_stop()
 
     async def async_step_stop(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle the initial step."""
+        """Select a stop from the search results."""
         if user_input is None:
             return self.async_show_form(
                 step_id="stop",
@@ -186,7 +229,7 @@ class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_details(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle the details."""
+        """Collect the per-stop details and create the subentry."""
         if user_input is None:
             return self.async_show_form(
                 step_id="details",
@@ -205,28 +248,27 @@ class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_reconfigure(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle reconfiguration."""
-        entry = self._get_reconfigure_entry()
+        """Reconfigure an existing stop's details (the stop itself is fixed)."""
+        subentry = self._get_reconfigure_subentry()
 
         if user_input is not None:
-            data = user_input
-            data[CONF_DEPARTURES_STOP_ID] = entry.data[CONF_DEPARTURES_STOP_ID]
-            data[CONF_DEPARTURES_NAME] = entry.data[CONF_DEPARTURES_NAME]
-            return self.async_update_reload_and_abort(
-                entry,
+            data = {**subentry.data, **user_input}
+            return self.async_update_and_abort(
+                self._get_entry(),
+                subentry,
                 data=data,
             )
 
         return self.async_show_form(
             step_id="reconfigure",
             data_schema=self.add_suggested_values_to_schema(
-                DATA_SCHEMA, dict(entry.data)
+                DATA_SCHEMA, dict(subentry.data)
             ),
         )
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):  # pylint: disable=too-few-public-methods
-    """Handle the options (advanced settings) for an existing entry."""
+    """Edit the hub-level (shared) settings for an existing entry."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -238,6 +280,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):  # pylint: disable=too-few
         return self.async_show_form(
             step_id="init",
             data_schema=self.add_suggested_values_to_schema(
-                OPTIONS_SCHEMA, self.config_entry.options
+                HUB_SCHEMA,
+                self.config_entry.options,
             ),
         )

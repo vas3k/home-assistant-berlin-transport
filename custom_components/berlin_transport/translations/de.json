@@ -2,56 +2,76 @@
   "config": {
     "step": {
       "user": {
-        "title": "Haltestelle suchen",
-        "description": "Name eingeben, um die Haltestellen-ID zu finden",
+        "title": "Hub hinzufügen",
+        "description": "API-Endpunkt und die für alle Haltestellen dieses Hubs gemeinsamen Einstellungen konfigurieren",
         "data": {
-          "search": "Haltestellenname"
+          "api_endpoint": "API-Endpunkt-URL",
+          "api_max_results": "Maximale Ergebnisse pro Anfrage",
+          "fallback_time": "Überbrückungszeit in Minuten (für diese Zeit werden die letzten Ergebnisse angezeigt, wenn die API nicht erreichbar ist)"
         }
+      }
+    }
+  },
+  "config_subentries": {
+    "stop": {
+      "initiate_flow": {
+        "user": "Haltestelle hinzufügen",
+        "reconfigure": "Haltestelle neu konfigurieren"
       },
-      "stop": {
-        "title": "Haltestelle auswählen",
-        "description": "Wähle die gewünschte Haltestelle aus der Liste der Suchergebnisse aus.",
-        "data": {
-          "name": "Haltestellenname",
-          "selected_stop": "Haltestelle (Name und ID)"
-        }
-      },
-      "details": {
-        "title": "Weitere Details",
-        "description": "Zusätzliche Einstellungen",
-        "data": {
-          "walking_time": "Gehminuten zur Haltestelle",
-          "direction": "Nur Abfahrten zu diesen (End-)Haltestellen",
-          "excluded_stops": "Diese nahegelegenen Haltestellen ignorieren",
-          "excluded_lines": "Diese Linien ignorieren",
-          "show_official_line_colors": "Offizielle VBB-Farben verwenden",
-          "duration": "Zeitraum für Abfahrten (Minuten)",
-          "suburban": "S-Bahn anzeigen",
-          "subway": "U-Bahn anzeigen",
-          "tram": "Tram anzeigen",
-          "bus": "Bus anzeigen",
-          "ferry": "Fähren anzeigen",
-          "express": "IC/ICE anzeigen",
-          "regional": "RB/RE anzeigen"
-        }
-      },
-      "reconfigure": {
-        "title": "Neu konfigurieren",
-        "description": "Sensoreinstellungen bearbeiten",
-        "data": {
-          "walking_time": "Gehminuten zur Haltestelle",
-          "direction": "Nur Abfahrten zu diesen (End-)Haltestellen",
-          "excluded_stops": "Diese nahegelegenen Haltestellen ignorieren",
-          "excluded_lines": "Diese Linien ignorieren",
-          "show_official_line_colors": "Offizielle VBB-Farben verwenden",
-          "duration": "Zeitraum für Abfahrten (Minuten)",
-          "suburban": "S-Bahn anzeigen",
-          "subway": "U-Bahn anzeigen",
-          "tram": "Tram anzeigen",
-          "bus": "Bus anzeigen",
-          "ferry": "Fähren anzeigen",
-          "express": "IC/ICE anzeigen",
-          "regional": "RB/RE anzeigen"
+      "entry_type": "Haltestelle",
+      "step": {
+        "user": {
+          "title": "Haltestelle suchen",
+          "description": "Name eingeben, um die Haltestellen-ID zu finden",
+          "data": {
+            "search": "Haltestellenname"
+          }
+        },
+        "stop": {
+          "title": "Haltestelle auswählen",
+          "description": "Wähle die gewünschte Haltestelle aus der Liste der Suchergebnisse aus.",
+          "data": {
+            "name": "Haltestellenname",
+            "selected_stop": "Haltestelle (Name und ID)"
+          }
+        },
+        "details": {
+          "title": "Weitere Details",
+          "description": "Zusätzliche Einstellungen",
+          "data": {
+            "walking_time": "Gehminuten zur Haltestelle",
+            "direction": "Nur Abfahrten zu diesen (End-)Haltestellen",
+            "excluded_stops": "Diese nahegelegenen Haltestellen ignorieren",
+            "excluded_lines": "Diese Linien ignorieren",
+            "show_official_line_colors": "Offizielle VBB-Farben verwenden",
+            "duration": "Zeitraum für Abfahrten (Minuten)",
+            "suburban": "S-Bahn anzeigen",
+            "subway": "U-Bahn anzeigen",
+            "tram": "Tram anzeigen",
+            "bus": "Bus anzeigen",
+            "ferry": "Fähren anzeigen",
+            "express": "IC/ICE anzeigen",
+            "regional": "RB/RE anzeigen"
+          }
+        },
+        "reconfigure": {
+          "title": "Neu konfigurieren",
+          "description": "Sensoreinstellungen bearbeiten",
+          "data": {
+            "walking_time": "Gehminuten zur Haltestelle",
+            "direction": "Nur Abfahrten zu diesen (End-)Haltestellen",
+            "excluded_stops": "Diese nahegelegenen Haltestellen ignorieren",
+            "excluded_lines": "Diese Linien ignorieren",
+            "show_official_line_colors": "Offizielle VBB-Farben verwenden",
+            "duration": "Zeitraum für Abfahrten (Minuten)",
+            "suburban": "S-Bahn anzeigen",
+            "subway": "U-Bahn anzeigen",
+            "tram": "Tram anzeigen",
+            "bus": "Bus anzeigen",
+            "ferry": "Fähren anzeigen",
+            "express": "IC/ICE anzeigen",
+            "regional": "RB/RE anzeigen"
+          }
         }
       }
     }

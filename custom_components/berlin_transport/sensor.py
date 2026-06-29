@@ -14,7 +14,10 @@ import voluptuous as vol
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import (
+    AddConfigEntryEntitiesCallback,
+    AddEntitiesCallback,
+)
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.components.sensor import SensorEntity
@@ -44,6 +47,8 @@ from .const import (
     CONF_TYPE_SUBWAY,
     CONF_TYPE_TRAM,
     CONF_DEPARTURES_NAME,
+    CONF_UNIQUE_ID,
+    SUBENTRY_TYPE_STOP,
     DEFAULT_ICON,
 )
 from .departure import Departure
@@ -82,6 +87,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 
+# Kept here for backwards compatability with yaml users
 async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
@@ -97,11 +103,21 @@ async def async_setup_platform(
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
+    # The entry is a hub: shared settings live on it, each stop is a subentry.
     # Options (edited via the options flow) override the values stored at setup.
-    config = {**config_entry.data, **config_entry.options}
-    async_add_entities([TransportSensor(hass, config, config_entry.entry_id)], True)
+    hub_config = {**config_entry.data, **config_entry.options}
+    for subentry_id, subentry in config_entry.subentries.items():
+        if subentry.subentry_type != SUBENTRY_TYPE_STOP:
+            continue
+        config = {**hub_config, **subentry.data}
+        unique_id = subentry.data.get(CONF_UNIQUE_ID) or subentry_id
+        async_add_entities(
+            [TransportSensor(hass, config, unique_id)],
+            update_before_add=True,
+            config_subentry_id=subentry_id,
+        )
 
 
 class TransportSensor(SensorEntity):
