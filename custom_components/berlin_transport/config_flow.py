@@ -1,4 +1,3 @@
-# mypy: disable-error-code="attr-defined,call-arg"
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
 from __future__ import annotations
@@ -12,7 +11,6 @@ import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
-from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -127,8 +125,15 @@ def list_stops(stops) -> Optional[vol.Schema]:
     return schema
 
 
-class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
-    """Create a hub entry that holds the API endpoint and shared settings."""
+class TransportConfigFlowHandler(
+    config_entries.ConfigFlow,
+    domain=DOMAIN,
+):  # pylint: disable=abstract-method
+    """Create a hub entry that holds the API endpoint and shared settings.
+
+    `is_matching` is left unimplemented on purpose: the hub is only ever set up
+    by the user, never through discovery.
+    """
 
     VERSION = 2
 
@@ -153,7 +158,7 @@ class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> config_entries.ConfigFlowResult:
         """Create the hub."""
         if user_input is None:
             return self.async_show_form(
@@ -185,7 +190,7 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> config_entries.SubentryFlowResult:
         """Search for a stop using the hub's API endpoint."""
         if user_input is None:
             return self.async_show_form(
@@ -203,7 +208,7 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
 
     async def async_step_stop(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> config_entries.SubentryFlowResult:
         """Select a stop from the search results."""
         if user_input is None:
             return self.async_show_form(
@@ -228,7 +233,7 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
 
     async def async_step_details(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> config_entries.SubentryFlowResult:
         """Collect the per-stop details and create the subentry."""
         if user_input is None:
             return self.async_show_form(
@@ -247,7 +252,7 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
 
     async def async_step_reconfigure(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> config_entries.SubentryFlowResult:
         """Reconfigure an existing stop's details (the stop itself is fixed)."""
         subentry = self._get_reconfigure_subentry()
 
@@ -274,7 +279,7 @@ class OptionsFlowHandler(
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> config_entries.ConfigFlowResult:
         """Manage the options."""
         if user_input is not None:
             return self.async_create_entry(data=user_input)

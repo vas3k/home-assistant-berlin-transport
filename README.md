@@ -156,6 +156,19 @@ Each stop becomes one entity, with the upcoming departures written into `attribu
 
 Contributions are welcome. Feel free to [open a PR](https://github.com/vas3k/home-assistant-berlin-transport/pulls) and send it for review. If you are unsure, [open an Issue](https://github.com/vas3k/home-assistant-berlin-transport/issues) and ask for advice.
 
+To run the same checks CI runs, install the development dependencies (any Python that Home Assistant supports will do — mypy targets 3.13 either way):
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements-dev.txt
+
+black --extend-exclude="custom_components/berlin_transport/const.py" --diff --check .
+pylint $(git ls-files '*.py')
+mypy $(git ls-files '*.py')
+```
+
+`requirements-dev.txt` installs Home Assistant itself, so mypy type-checks the `homeassistant`, `aiohttp` and `voluptuous` imports instead of ignoring them.
+
 ## 🐛 Bug reports and feature requests
 
 This is a hobby project, so we cannot guarantee 100% support or help with configuring your dashboards. We hope for your understanding.

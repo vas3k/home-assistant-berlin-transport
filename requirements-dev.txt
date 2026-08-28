@@ -1,0 +1,10 @@
+# Linters and formatters used by .github/workflows/code-quality.yml
+black
+pylint
+mypy
+
+# Typed runtime dependencies, so mypy can check the imports instead of ignoring
+# them. `homeassistant` ships a py.typed marker and pulls in aiohttp and
+# voluptuous.
+homeassistant>=2025.3.0
+async-timeout>=4.0.2
