@@ -1,5 +1,3 @@
-# mypy: disable-error-code="attr-defined"
-
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
 from __future__ import annotations
