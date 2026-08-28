@@ -3,5 +3,7 @@
   "hide_default_branch": false,
   "country": "DE",
   "homeassistant": "2023.9.0",
-  "hacs": "1.0.0"
+  "hacs": "1.0.0",
+  "zip_release": true,
+  "filename": "berlin_transport.zip"
 }
