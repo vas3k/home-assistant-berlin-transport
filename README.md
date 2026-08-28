@@ -10,48 +10,90 @@ You need to install them both. Preferably through HACS. We have separated two re
 
 > I use [iOS Dark Mode Theme](https://github.com/basnijholt/lovelace-ios-dark-mode-theme) by @basnijholt, installed from [HACS](https://hacs.xyz/)
 
+## 📋 Requirements
+
+- Home Assistant **2025.3.0** or newer. The integration uses config subentries, which were introduced in that release.
+- Access to a [vbb-rest](https://github.com/derhuerst/vbb-rest) API server. By default the public instance at `https://v6.vbb.transport.rest` is used, but you can point the integration at your own — see [Using your own API server](#-using-your-own-api-server).
+
 ## 💿 Installation
 
 The component consists of two parts:
 
-1. A sensor, which tracks departures via [VBB public API](https://v6.vbb.transport.rest/api.html#get-stopsiddepartures) every 90 seconds. This is this repository.
-2. A widget (card) for the lovelace dashboard, which displays upcoming transport in a nice way. It has its own [separate repository](https://github.com/vas3k/lovelace-berlin-transport-card) with installation instructions.
+1. A sensor, which tracks departures via the [VBB public API](https://v6.vbb.transport.rest/api.html#get-stopsiddepartures) every 90 seconds. This is this repository.
+2. A widget (card) for the Lovelace dashboard, which displays upcoming transport in a nice way. It has its own [separate repository](https://github.com/vas3k/lovelace-berlin-transport-card) with installation instructions.
 
-### Install sensor component via HACS
+### Install the sensor component via HACS
 
-1. Add this [repository](https://github.com/vas3k/home-assistant-berlin-transport) as a custom repository in HACS in the category "integration".
-1. Add `Berlin (BVG) and Brandenburg (VBB) transport` as a new integration under `Settings` -> `Devices & services`  
-1. Search for your stop. Partial matches are supported — up to 15 relevant stops will be listed.
-1. Select the stop you want to monitor.
-1. (Optional) Configure additional parameters:
-    - Direction: Use `stop_id` to filter departures by direction. Provide the stop_id of stop along the intended lines or their final destination. Multiple values can be specified using a comma-separated list. See [below](#how-do-i-find-my-stop_id) for how to find the `stop id`.
-    - Exclude stops: List of `stop_id` which should be excluded. Use if BVG/VBB is returning departures from nearby stops. Multiple values can be specified using a comma-separated list.
-    - Duration: Defines how many minutes into the future departures should be fetched. Default is 10 minutes.
-    - Walking time: Enter the time needed to walk to the stop. This prevents unreachable departures from being shown.
-    - Enable official VBB line colors: Optionally enable official VBB line colors. By default, predefined colors are used.
-    - Transport options: Choose which transport types (e.g., bus, ferry) to show or hide.
-1. Done. If you want to change options later on, just run through the steps again with the same stop. The previous entity will be overwritten automatically.
+Add this [repository](https://github.com/vas3k/home-assistant-berlin-transport) as a custom repository in HACS in the category "integration", install it, and restart Home Assistant.
 
-### Install sensor component manually
+## ⚙️ Configuration
 
-#### How do I find my `stop_id`?
+The integration is organised as a **hub** with one **stop** per subentry. The hub holds the API settings; each stop under it is a sensor entity. This means you configure the API endpoint once and add as many stops as you like underneath it.
 
-Unfortunately, I didn't have time to figure out a proper user-friendly approach of adding new components to Home Assistant, so you will have to do some routine work of finding the IDs of the nearest transport stops to you. Sorry about that :)
+### 1. Add the hub
 
-Simply use this URL: **https://v6.vbb.transport.rest/locations?results=1&query=alexanderplatz**
+Go to `Settings` → `Devices & services` → `Add integration` and search for `Berlin (BVG) and Brandenburg (VBB) transport`. You will be asked for:
 
-Replace `alexanderplatz` with the name of your own stop.
+| Setting                               | Default                         | Description |
+| ------------------------------------- | ------------------------------- | ----------- |
+| API endpoint URL                      | `https://v6.vbb.transport.rest` | Base URL of the vbb-rest server to query. No trailing slash. |
+| Maximum number of results per request | `15`                            | How many departures to request per stop, and how many results to show when searching for a stop. |
+| Fallback time in minutes              | `15`                            | If the API becomes unreachable, keep showing the last known departures for this long before marking the sensor unavailable. |
 
-![](./docs/screenshots/stop-id-api.jpg)
+If you just want the public API, accept the defaults.
 
-> 🧐 **Pro tip:**
-> You can also use their [location-based API](https://v6.vbb.transport.rest/api.html#get-stopsnearby) to find all stops nearby using your GPS coordinates.
+### 2. Add stops to the hub
 
-**1.** Copy the whole [berlin_transport](./custom_components/) directory to the `custom_components` folder of your Home Assistant installation. If you can't find the `custom_components` directory at the same level with your `configuration.yml` — simply create it yourself and put `berlin_transport` there.
+On the integration's page, click `Add stop`. Then:
 
-**2.** Go to Home Assistant web interface -> `Developer Tools` -> `Check and Restart` and click "Restart" button. It will reload all components in the system.
+1. Search for your stop by name. Partial matches work — up to "maximum results" stops will be listed.
+2. Select the stop you want to monitor from the dropdown.
+3. Optionally configure the per-stop settings below.
 
-**3.** Now you can add your new custom sensor to the corresponding section in the `configuration.yml` file.
+Repeat for every stop you want. All stops under one hub share the same API endpoint and request settings.
+
+#### Per-stop settings
+
+| Setting                               | Default | Description |
+| ------------------------------------- | ------- | ----------- |
+| Walking time in minutes               | `1`     | Time needed to walk to the stop. Departures you could not reach in time are hidden. |
+| Filter departures by direction        | not set | Comma-separated list of `stop_id`s along the intended lines, or their final destinations. See [How do I find my stop_id?](#how-do-i-find-my-stop_id). |
+| Exclude nearby stops with IDs         | not set | Comma-separated list of `stop_id`s to drop from the results. Use this when the API returns departures from nearby stops. |
+| Exclude lines by name                 | not set | Comma-separated list of line names, e.g. `S41`. |
+| Show departures for how many minutes? | not set | How far into the future to fetch departures. Leave empty to use the API's own default window. |
+| Enable official VBB line colors       | off     | Use the colors reported by the API instead of the predefined ones. |
+| Transport types                       | all on  | Which products to include: S-Bahn, U-Bahn, Tram, Bus, Ferry, IC/ICE, RB/RE. |
+
+### 3. Change settings later
+
+- **Hub settings** (API endpoint, maximum results, fallback time): open the hub's `⋮` menu and choose `Configure`.
+- **Stop settings**: open the stop's `⋮` menu and choose `Reconfigure`. The stop itself cannot be changed — to monitor a different stop, add a new one and delete the old.
+
+Both take effect immediately; the integration reloads itself.
+
+## 🏠 Using your own API server
+
+The public instance at `v6.vbb.transport.rest` is shared and occasionally rate limited or unavailable (see [#36](https://github.com/vas3k/home-assistant-berlin-transport/issues/36)). If you depend on it, run your own copy of [derhuerst/vbb-rest](https://github.com/derhuerst/vbb-rest) — for example with Docker — and set the API endpoint on the hub to your instance, e.g. `http://vbb-rest.local:3000`.
+
+A home assistant addon for the server is also available at https://github.com/Cornelicorn/homeassistant-addons.
+
+## ⬆️ Upgrading from earlier versions
+
+Older versions created **one config entry per stop**. On first start after the update, each of those entries is migrated automatically into its own hub with a single stop underneath it. Your entities keep their IDs, so history and dashboards are unaffected.
+
+If you had several stops, you will end up with several hubs, each named after the stop it was migrated from. That works fine, but if you want them grouped under one hub with one API config:
+
+1. Add a new hub with your preferred API settings.
+2. Add your stops to it.
+3. Delete the migrated single-stop hubs.
+
+Note that entities added this way get new IDs, so you will lose their history. Renaming the new entities to the old entity IDs before deleting the old hubs should avoid that.
+
+Downgrading to a pre-hub version is not supported; the config entries cannot be converted back.
+
+## 📝 YAML configuration (legacy)
+
+YAML setup still works for existing configurations, but it does not support the API endpoint, maximum results, or fallback time settings — those always use the defaults. New setups should use the UI.
 
 ```yaml
 sensor:
@@ -74,39 +116,52 @@ sensor:
         # duration: 30 # Optional (default 10), query departures for how many minutes from now?
 ```
 
-**4.** Restart Home Assistant core again and you should now see two new entities (however, it may take some time for them to fetch new data). If you don't see anything new — check the logs (Settings -> System -> Logs). Some error should pop up there.
+To install manually, copy the whole [berlin_transport](./custom_components/) directory into the `custom_components` folder of your Home Assistant installation (create it next to `configuration.yaml` if it doesn't exist), then restart Home Assistant.
 
-### Add the lovelace card
+### How do I find my `stop_id`?
 
-Go to [lovelace-berlin-transport-card](https://github.com/vas3k/lovelace-berlin-transport-card) repo and follow installation instructions there.
+The UI flow searches for stops for you, so you only need this for YAML, or for the direction and exclusion filters.
+
+Use this URL: **https://v6.vbb.transport.rest/locations?results=1&query=alexanderplatz**
+
+Replace `alexanderplatz` with the name of your own stop. If you self-host, use your own server's address instead.
+
+![](./docs/screenshots/stop-id-api.jpg)
+
+> 🧐 **Pro tip:**
+> You can also use the [location-based API](https://v6.vbb.transport.rest/api.html#get-stopsnearby) to find all stops nearby using your GPS coordinates.
+
+## 🎨 Add the Lovelace card
+
+Go to the [lovelace-berlin-transport-card](https://github.com/vas3k/lovelace-berlin-transport-card) repo and follow the installation instructions there.
 
 ## 👩‍💻 Technical details
 
-This sensor uses VBB Public API to fetch all transport information.
+This sensor uses the VBB public API to fetch all transport information.
 
-- API docs: https://v5.vbb.transport.rest/api.html
-- Rate limit: 100 req/min
+- API docs: https://v6.vbb.transport.rest/api.html
+- Rate limit on the public instance: 100 req/min
 - Format: [HAFAS](https://github.com/public-transport/hafas-client)
 
-The component updates every 60-90 seconds, but it makes a separate request for each stop. That's usually enough, but I wouldn't recommend adding dozens of different stops so you don't hit the rate limit.
+Every stop is polled every 90 seconds, and each stop is a separate request. If you filter by direction, one request is made per direction. On the public API, keep that in mind before adding dozens of stops so you don't hit the rate limit.
 
-The VBB API is a bit unstable (as you can guess), so sometimes it gives random 503 or Timeout errors. This is normal. I haven't found how to overcome this, but it doesn't cause any problems other than warning messages in the logs.
+The public API is a bit unstable (as you can guess), so sometimes it returns random 503 or timeout errors. This is normal. When a request fails, the last known departures are kept for the configured fallback time and stale ones are dropped as they pass; after that the sensor goes unavailable.
 
-After fetching the API, it creates one entity for each stop and writes 10 upcoming departures into `attributes.departures`. The entity state is not really used anywhere, it just shows the next departure in a human-readable format. If you have any ideas how to use it better — welcome to Github Issues.
+Each stop becomes one entity, with the upcoming departures written into `attributes.departures` (as many as the hub's "maximum results" setting). The entity state is not really used anywhere, it just shows the next departure in a human-readable format. If you have any ideas how to use it better — welcome to GitHub Issues.
 
 > 🤔
-> In principle, the HAFAS format is standardized in many other cities too, so you should have no problem adapting this component to more places if you wish. Check out [transport.rest](https://transport.rest/) for an inspiration.
+> In principle, the HAFAS format is standardized in many other cities too, so you should have no problem adapting this component to more places if you wish. Check out [transport.rest](https://transport.rest/) for inspiration.
 
 ## ❤️ Contributions
 
-Contributions are welcome. Feel free to [open a PR](https://github.com/vas3k/home-assistant-berlin-transport/pulls) and send it to review. If you are unsure, [open an Issue](https://github.com/vas3k/home-assistant-berlin-transport/issues) and ask for advice.
+Contributions are welcome. Feel free to [open a PR](https://github.com/vas3k/home-assistant-berlin-transport/pulls) and send it for review. If you are unsure, [open an Issue](https://github.com/vas3k/home-assistant-berlin-transport/issues) and ask for advice.
 
 ## 🐛 Bug reports and feature requests
 
-Since this is my small hobby project, I cannot guarantee you a 100% support or any help with configuring your dashboards. I hope for your understanding.
+This is a hobby project, so we cannot guarantee 100% support or help with configuring your dashboards. We hope for your understanding.
 
-- **If you find a bug** - open [an Issue](https://github.com/vas3k/home-assistant-berlin-transport/issues) and describe the exact steps to reproduce it. Attach screenshots, copy all logs and other details to help me find the problem.
-- **If you're missing a certain feature**, describe it in Issues and try to code it yourself. It's not hard. At the very least, you can try to [bribe me with a PayPal donation](https://www.paypal.com/paypalme/vas3kcom) to make the feature just for you :)
+- **If you find a bug**, open [an Issue](https://github.com/vas3k/home-assistant-berlin-transport/issues) and describe the exact steps to reproduce it. Attach screenshots, copy all logs and other details to help find the problem. Please mention whether you use the public API or your own server.
+- **If you're missing a certain feature**, describe it in Issues and try to code it yourself. It's not hard. At the very least, you can try to [bribe @vas3k with a PayPal donation](https://www.paypal.com/paypalme/vas3kcom) :)
 
 ## 👮‍♀️ License
 
