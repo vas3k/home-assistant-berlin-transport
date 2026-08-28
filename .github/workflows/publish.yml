@@ -1,0 +1,41 @@
+name: Publish Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  release:
+    types:
+      - published
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Update version in manifest to tag name
+        working-directory: custom_components/berlin_transport
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          export version
+          jq '.version = env.version' manifest.json > manifest.json.new
+          mv manifest.json.new manifest.json
+
+      - name: Zip
+        working-directory: custom_components/berlin_transport
+        run: zip -r berlin_transport.zip .
+
+      - name: Attach zip to draft or existing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          zip_path: custom_components/berlin_transport/berlin_transport.zip
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1
+          then
+            gh release upload "$GITHUB_REF_NAME" "$zip_path" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" --draft --generate-notes --title "$GITHUB_REF_NAME" "$zip_path"
+          fi
