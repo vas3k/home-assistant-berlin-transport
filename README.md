@@ -79,15 +79,8 @@ A home assistant addon for the server is also available at https://github.com/Co
 
 ## ⬆️ Upgrading from earlier versions
 
-Older versions created **one config entry per stop**. On first start after the update, each of those entries is migrated automatically into its own hub with a single stop underneath it. Your entities keep their IDs, so history and dashboards are unaffected.
+Older versions created **one config entry per stop**. On first start after the update, all of those entries are migrated automatically into a **single hub**, with each old entry becoming a stop underneath it. Your entities keep their IDs, so history and dashboards are unaffected.
 
-If you had several stops, you will end up with several hubs, each named after the stop it was migrated from. That works fine, but if you want them grouped under one hub with one API config:
-
-1. Add a new hub with your preferred API settings.
-2. Add your stops to it.
-3. Delete the migrated single-stop hubs.
-
-Note that entities added this way get new IDs, so you will lose their history. Renaming the new entities to the old entity IDs before deleting the old hubs should avoid that.
 
 Downgrading to a pre-hub version is not supported; the config entries cannot be converted back.
 
