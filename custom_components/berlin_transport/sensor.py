@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import ssl
 from datetime import datetime, timedelta
 from typing import Any, Mapping
 
@@ -44,6 +45,7 @@ from .const import (
     CONF_TYPE_TRAM,
     CONF_UNIQUE_ID,
     DEFAULT_API_ENDPOINT,
+    DEFAULT_API_ENDPOINT_FALLBACK,
     DEFAULT_API_MAX_RESULTS,
     DEFAULT_FALLBACK_TIME,
     DEFAULT_ICON,
@@ -179,6 +181,13 @@ class TransportSensor(SensorEntity):
         self.config = config
         self._entry_id = entry_id
         self.api_endpoint: str = config.get(CONF_API_ENDPOINT) or DEFAULT_API_ENDPOINT
+        # Only used when it actually differs from the configured endpoint,
+        # so a user who already points at the fallback isn't retried against it.
+        self.api_endpoint_fallback: str | None = (
+            DEFAULT_API_ENDPOINT_FALLBACK
+            if self.api_endpoint != DEFAULT_API_ENDPOINT_FALLBACK
+            else None
+        )
         self.api_max_results: int = (
             config.get(CONF_API_MAX_RESULTS) or DEFAULT_API_MAX_RESULTS
         )
@@ -255,40 +264,66 @@ class TransportSensor(SensorEntity):
             self.departures = departures
             self.last_update_success = current_time
 
-    async def fetch_directional_departure(
-        self, direction: str | None
-    ) -> list[Departure] | None:
-        try:
-            params: dict[str, Any] = {
-                "when": (
-                    datetime.now().astimezone() + timedelta(minutes=self.walking_time)
-                ).isoformat(),
-                "results": self.api_max_results,
-                "suburban": str(self.config.get(CONF_TYPE_SUBURBAN) or False).lower(),
-                "subway": str(self.config.get(CONF_TYPE_SUBWAY) or False).lower(),
-                "tram": str(self.config.get(CONF_TYPE_TRAM) or False).lower(),
-                "bus": str(self.config.get(CONF_TYPE_BUS) or False).lower(),
-                "ferry": str(self.config.get(CONF_TYPE_FERRY) or False).lower(),
-                "express": str(self.config.get(CONF_TYPE_EXPRESS) or False).lower(),
-                "regional": str(self.config.get(CONF_TYPE_REGIONAL) or False).lower(),
-            }
-            if self.duration is not None:
-                params["duration"] = self.duration
-            if direction is not None:
-                params["direction"] = direction
+    async def _request_departures(self, endpoint: str, params: dict[str, Any]) -> dict:
+        async with async_timeout.timeout(30):
+            response = await self.session.get(
+                url=f"{endpoint}/stops/{self.stop_id}/departures",
+                params=params,
+            )
+            response.raise_for_status()
+            return await response.json()
 
-            async with async_timeout.timeout(30):
-                response = await self.session.get(
-                    url=f"{self.api_endpoint}/stops/{self.stop_id}/departures",
-                    params=params,
-                )
-                response.raise_for_status()
-                departures = await response.json()
+    async def _request_departures_with_fallback(
+        self, params: dict[str, Any]
+    ) -> dict | None:
+        try:
+            return await self._request_departures(self.api_endpoint, params)
+        except (aiohttp.ClientConnectionError, ssl.SSLError) as ex:
+            if self.api_endpoint_fallback is None:
+                _LOGGER.warning(f"API connection error: {ex}")
+                return None
+            _LOGGER.warning(
+                f"API connection error on {self.api_endpoint}, falling back to "
+                f"{self.api_endpoint_fallback}: {ex}"
+            )
         except aiohttp.ClientError as ex:
             _LOGGER.warning(f"API error: {ex}")
             return None
-        except Exception as ex:
+        except Exception as ex:  # pylint: disable=broad-except
             _LOGGER.error(f"Unexpected error: {ex}")
+            return None
+
+        try:
+            return await self._request_departures(self.api_endpoint_fallback, params)
+        except aiohttp.ClientError as ex:
+            _LOGGER.warning(f"API error on fallback endpoint: {ex}")
+        except Exception as ex:  # pylint: disable=broad-except
+            _LOGGER.error(f"Unexpected error on fallback endpoint: {ex}")
+        return None
+
+    async def fetch_directional_departure(
+        self, direction: str | None
+    ) -> list[Departure] | None:
+        params: dict[str, Any] = {
+            "when": (
+                datetime.now().astimezone() + timedelta(minutes=self.walking_time)
+            ).isoformat(),
+            "results": self.api_max_results,
+            "suburban": str(self.config.get(CONF_TYPE_SUBURBAN) or False).lower(),
+            "subway": str(self.config.get(CONF_TYPE_SUBWAY) or False).lower(),
+            "tram": str(self.config.get(CONF_TYPE_TRAM) or False).lower(),
+            "bus": str(self.config.get(CONF_TYPE_BUS) or False).lower(),
+            "ferry": str(self.config.get(CONF_TYPE_FERRY) or False).lower(),
+            "express": str(self.config.get(CONF_TYPE_EXPRESS) or False).lower(),
+            "regional": str(self.config.get(CONF_TYPE_REGIONAL) or False).lower(),
+        }
+        if self.duration is not None:
+            params["duration"] = self.duration
+        if direction is not None:
+            params["direction"] = direction
+
+        departures = await self._request_departures_with_fallback(params)
+        if departures is None:
             return None
 
         if not departures or "departures" not in departures:

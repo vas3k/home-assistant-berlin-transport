@@ -12,6 +12,10 @@ CONF_UNIQUE_ID = "unique_id"
 DEFAULT_SCAN_INTERVAL = 90  # seconds
 DEFAULT_FALLBACK_TIME = 15  # minutes
 DEFAULT_API_ENDPOINT = "https://v6.vbb.transport.rest"
+# BVG's own HAFAS instance covers the same VBB-area stop IDs and serves as a
+# fallback when the configured endpoint is unreachable at the connection/TLS
+# level (e.g. TLS handshake failures observed on v6.vbb.transport.rest).
+DEFAULT_API_ENDPOINT_FALLBACK = "https://v6.bvg.transport.rest"
 DEFAULT_API_MAX_RESULTS = 15
 
 # Option keys (stored in ConfigEntry.options, edited via the options flow)
