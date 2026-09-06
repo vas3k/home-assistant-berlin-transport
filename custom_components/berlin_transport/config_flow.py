@@ -27,6 +27,7 @@ from .const import (
     CONF_FALLBACK_TIME,
     CONF_SELECTED_STOP,
     CONF_SHOW_API_LINE_COLORS,
+    CONFIG_ENTRY_VERSION,
     DEFAULT_API_ENDPOINT,
     DEFAULT_API_MAX_RESULTS,
     DEFAULT_FALLBACK_TIME,
@@ -53,11 +54,30 @@ HUB_SCHEMA = vol.Schema(
     }
 )
 
+
+def string_list_selector() -> selector.TextSelector:
+    """Free-form multi-value input, one text field per value.
+
+    The frontend repeats the field label on every row, so the labels of the
+    options using this are phrased in the singular.
+    """
+    return selector.TextSelector(selector.TextSelectorConfig(multiple=True))
+
+
 DATA_SCHEMA = vol.Schema(
     {
-        vol.Optional(CONF_DEPARTURES_DIRECTION): cv.string,
-        vol.Optional(CONF_DEPARTURES_EXCLUDED_STOPS): cv.string,
-        vol.Optional(CONF_DEPARTURES_EXCLUDED_LINES): cv.string,
+        vol.Optional(
+            CONF_DEPARTURES_DIRECTION,
+            default=list,
+        ): string_list_selector(),
+        vol.Optional(
+            CONF_DEPARTURES_EXCLUDED_STOPS,
+            default=list,
+        ): string_list_selector(),
+        vol.Optional(
+            CONF_DEPARTURES_EXCLUDED_LINES,
+            default=list,
+        ): string_list_selector(),
         vol.Optional(CONF_DEPARTURES_DURATION): cv.positive_int,
         vol.Optional(CONF_DEPARTURES_WALKING_TIME, default=1): cv.positive_int,
         vol.Optional(CONF_SHOW_API_LINE_COLORS, default=False): cv.boolean,
@@ -135,7 +155,7 @@ class TransportConfigFlowHandler(
     by the user, never through discovery.
     """
 
-    VERSION = 2
+    VERSION = CONFIG_ENTRY_VERSION
 
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 

@@ -17,9 +17,11 @@ from .const import (
     CONF_API_MAX_RESULTS,
     CONF_FALLBACK_TIME,
     CONF_UNIQUE_ID,
+    CONFIG_ENTRY_VERSION,
     DEFAULT_API_ENDPOINT,
     SUBENTRY_TYPE_STOP,
 )
+from .helpers import normalized_list_options
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,16 +39,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Migrate v1 (one entry per stop) to v2 (one hub entry + stop subentries).
+    """Migrate an entry to the current version.
 
-    All v1 entries end up in a single hub: the first one to be migrated becomes
-    that hub, every later one hands its stop over as a subentry and is removed.
-    The shared settings of that first entry become the hub's and from then on
-    apply to every stop under it.
+    v1 -> v2: one entry per stop becomes a single hub entry with one subentry
+    per stop. All v1 entries end up in a single hub: the first one to be
+    migrated becomes that hub, every later one hands its stop over as a
+    subentry and is removed. The shared settings of that first entry become the
+    hub's and from then on apply to every stop under it.
+
+    v2 -> v3: the options that used to hold a comma-separated string become
+    real lists of strings.
     """
-    if entry.version > 2:
+    if entry.version > CONFIG_ENTRY_VERSION:
         # Downgrade is not supported.
         return False
+
+    if entry.version == 2:
+        _migrate_lists(hass, entry)
+        return True
 
     if entry.version != 1:
         return True
@@ -55,6 +65,9 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hub_settings = {key: old[key] for key in _HUB_KEYS if key in old}
     # The remaining keys describe the single stop this entry used to be.
     stop_data = {k: v for k, v in old.items() if k not in _HUB_KEYS}
+    # v1 predates the list options, so bring the stop straight to v3 shape: it
+    # may well be handed to a hub that has already been migrated.
+    stop_data.update(normalized_list_options(stop_data))
     # Preserve the existing entity identity (was keyed on the entry id).
     stop_data[CONF_UNIQUE_ID] = entry.entry_id
     stop_title = entry.title
@@ -68,7 +81,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             data={},
             options=hub_settings,
             title=hub_settings.get(CONF_API_ENDPOINT) or DEFAULT_API_ENDPOINT,
-            version=2,
+            version=CONFIG_ENTRY_VERSION,
         )
         hub = entry
 
@@ -98,6 +111,21 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     _LOGGER.info("Migrated %s into the %s hub", stop_title, hub.title)
     return True
+
+
+def _migrate_lists(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Rewrite every stop's comma-separated string options as lists of strings."""
+    for subentry in list(entry.subentries.values()):
+        if subentry.subentry_type != SUBENTRY_TYPE_STOP:
+            continue
+        hass.config_entries.async_update_subentry(
+            entry,
+            subentry,
+            data={**subentry.data, **normalized_list_options(subentry.data)},
+        )
+
+    hass.config_entries.async_update_entry(entry, version=CONFIG_ENTRY_VERSION)
+    _LOGGER.info("Migrated the %s hub to list-valued stop options", entry.title)
 
 
 def _existing_hub(hass: HomeAssistant, entry: ConfigEntry) -> ConfigEntry | None:

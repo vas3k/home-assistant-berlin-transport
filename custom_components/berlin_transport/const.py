@@ -1,5 +1,8 @@
 DOMAIN = "berlin_transport"
 
+# Current config entry version, bumped whenever the stored data changes shape.
+CONFIG_ENTRY_VERSION = 3
+
 # Subentry type for stops added under a hub entry.
 SUBENTRY_TYPE_STOP = "stop"
 # Stable entity unique id, stored in subentry data (preserved across migration).
@@ -28,6 +31,22 @@ CONF_DEPARTURES_WALKING_TIME = "walking_time"
 CONF_DEPARTURES_DIRECTION = "direction"
 CONF_DEPARTURES_DURATION = "duration"
 CONF_SHOW_API_LINE_COLORS = "show_official_line_colors"
+
+# Per-stop options holding a list of strings. Up to config entry version 2 each
+# of these was stored as a single comma-separated string instead.
+CONF_LIST_OPTIONS = (
+    CONF_DEPARTURES_DIRECTION,
+    CONF_DEPARTURES_EXCLUDED_STOPS,
+    CONF_DEPARTURES_EXCLUDED_LINES,
+)
+
+# Repair issue raised while a YAML config still uses the comma-separated form.
+ISSUE_YAML_CSV_LISTS = "yaml_comma_separated_lists"
+YAML_DOCS_URL = (
+    "https://github.com/vas3k/home-assistant-berlin-transport"
+    "#-yaml-configuration-legacy"
+)
+
 CONF_TYPE_SUBURBAN = "suburban"
 CONF_TYPE_SUBWAY = "subway"
 CONF_TYPE_TRAM = "tram"

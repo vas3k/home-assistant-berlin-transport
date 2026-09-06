@@ -38,11 +38,16 @@
         "details": {
           "title": "More Details",
           "description": "Additional settings",
+          "data_description": {
+            "direction": "Only show departures that pass or end at any of these stops. Leave empty for all directions. Enter a single stop id each.",
+            "excluded_stops": "Drop departures that the API reports for these nearby stops. Enter a single stop id each.",
+            "excluded_lines": "Drop these lines from the results, e.g. S41."
+          },
           "data": {
             "walking_time": "Walking time to stop (minutes)",
-            "direction": "Only show departures which pass or end at these destinations",
-            "excluded_stops": "Ignore these nearby stop IDs",
-            "excluded_lines": "Ignore these lines",
+            "direction": "Direction filter",
+            "excluded_stops": "Ignored nearby stop",
+            "excluded_lines": "Ignored line",
             "show_official_line_colors": "Use official VBB line colors",
             "duration": "Departure time range (minutes)",
             "suburban": "Show S-Bahn",
@@ -57,11 +62,16 @@
         "reconfigure": {
           "title": "Reconfigure",
           "description": "Update sensor settings",
+          "data_description": {
+            "direction": "Only show departures that pass or end at any of these stops. Leave empty for all directions. Enter a single stop id each.",
+            "excluded_stops": "Drop departures that the API reports for these nearby stops. Enter a single stop id each.",
+            "excluded_lines": "Drop these lines from the results, e.g. S41."
+          },
           "data": {
             "walking_time": "Walking time to stop (minutes)",
-            "direction": "Only show departures which pass or end at these destinations",
-            "excluded_stops": "Ignore these nearby stop IDs",
-            "excluded_lines": "Ignore these lines",
+            "direction": "Direction filter",
+            "excluded_stops": "Ignored nearby stop",
+            "excluded_lines": "Ignored line",
             "show_official_line_colors": "Use official VBB line colors",
             "duration": "Departure time range (minutes)",
             "suburban": "Show S-Bahn",
@@ -87,6 +97,12 @@
           "fallback_time": "Fallback time in minutes (keep showing the last fetched departures for this time while the API is unavailable)"
         }
       }
+    }
+  },
+  "issues": {
+    "yaml_comma_separated_lists": {
+      "title": "Comma-separated lists in the YAML configuration",
+      "description": "The YAML configuration of {stops} still sets {options} as a comma-separated string. These options now take a list of values, and support for the comma-separated form will be removed in a future release.\n\nEdit `configuration.yaml` and write each value as its own list item, e.g.:\n\n```yaml\nsensor:\n  - platform: berlin_transport\n    departures:\n      - name: \"S+U Schönhauser Allee\"\n        stop_id: 900110001\n        excluded_lines:\n          - S41\n          - S42\n```\n\nRestart Home Assistant afterwards. This notice does not come back once no stop uses the old form."
     }
   }
 }

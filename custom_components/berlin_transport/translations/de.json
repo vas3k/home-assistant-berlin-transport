@@ -38,11 +38,16 @@
         "details": {
           "title": "Weitere Details",
           "description": "Zusätzliche Einstellungen",
+          "data_description": {
+            "direction": "Nur Abfahrten anzeigen, die an diesen Haltestellen halten oder dort enden. Leer lassen für keinen Filter. Eine Haltestellen-ID pro Eintrag.",
+            "excluded_stops": "Abfahrten für diese nahegelegenen Haltestellen ausblenden. Eine Haltestellen-ID pro Eintrag.",
+            "excluded_lines": "Diese Linien aus den Ergebnissen entfernen, z. B. S41."
+          },
           "data": {
             "walking_time": "Gehminuten zur Haltestelle",
-            "direction": "Nur Abfahrten zu diesen (End-)Haltestellen",
-            "excluded_stops": "Diese nahegelegenen Haltestellen ignorieren",
-            "excluded_lines": "Diese Linien ignorieren",
+            "direction": "Zwischenstopp Filter",
+            "excluded_stops": "Ignorierte Haltestellen",
+            "excluded_lines": "Ignorierte Linie",
             "show_official_line_colors": "Offizielle VBB-Farben verwenden",
             "duration": "Zeitraum für Abfahrten (Minuten)",
             "suburban": "S-Bahn anzeigen",
@@ -57,11 +62,16 @@
         "reconfigure": {
           "title": "Neu konfigurieren",
           "description": "Sensoreinstellungen bearbeiten",
+          "data_description": {
+            "direction": "Nur Abfahrten anzeigen, die an diesen Haltestellen halten oder dort enden. Leer lassen für keinen Filter. Eine Haltestellen-ID pro Eintrag.",
+            "excluded_stops": "Abfahrten für diese nahegelegenen Haltestellen entfernen. Eine Haltestellen-ID pro Eintrag.",
+            "excluded_lines": "Diese Linien aus den Ergebnissen entfernen, z. B. S41."
+          },
           "data": {
             "walking_time": "Gehminuten zur Haltestelle",
-            "direction": "Nur Abfahrten zu diesen (End-)Haltestellen",
-            "excluded_stops": "Diese nahegelegenen Haltestellen ignorieren",
-            "excluded_lines": "Diese Linien ignorieren",
+            "direction": "Zwischenstopp Filter",
+            "excluded_stops": "Ignorierte Haltestellen",
+            "excluded_lines": "Ignorierte Linie",
             "show_official_line_colors": "Offizielle VBB-Farben verwenden",
             "duration": "Zeitraum für Abfahrten (Minuten)",
             "suburban": "S-Bahn anzeigen",
@@ -87,6 +97,12 @@
           "fallback_time": "Überbrückungszeit in Minuten (für diese Zeit werden die letzten Ergebnisse angezeigt, wenn die API nicht erreichbar ist)"
         }
       }
+    }
+  },
+  "issues": {
+    "yaml_comma_separated_lists": {
+      "title": "Kommagetrennte Listen in der YAML-Konfiguration",
+      "description": "In der YAML-Konfiguration von {stops} ist {options} noch über Kommata getrennt angegeben. Diese Optionen erwarten jetzt eine Liste von Werten, die kommagetrennte Schreibweise wird in einer künftigen Version entfernt werden.\n\nTrage in der `configuration.yaml` jeden Wert als eigenen Listeneintrag ein, z. B.:\n\n```yaml\nsensor:\n  - platform: berlin_transport\n    departures:\n      - name: \"S+U Schönhauser Allee\"\n        stop_id: 900110001\n        excluded_lines:\n          - S41\n          - S42\n```\n\nStarte Home Assistant anschließend neu. Der Hinweis erscheint nicht mehr, sobald keine Haltestelle das alte Format verwendet."
     }
   }
 }

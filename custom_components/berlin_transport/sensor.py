@@ -12,7 +12,8 @@ import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity_platform import (
     AddConfigEntryEntitiesCallback,
@@ -32,6 +33,7 @@ from .const import (
     CONF_DEPARTURES_STOP_ID,
     CONF_DEPARTURES_WALKING_TIME,
     CONF_FALLBACK_TIME,
+    CONF_LIST_OPTIONS,
     CONF_SHOW_API_LINE_COLORS,
     CONF_TYPE_BUS,
     CONF_TYPE_EXPRESS,
@@ -46,9 +48,13 @@ from .const import (
     DEFAULT_FALLBACK_TIME,
     DEFAULT_ICON,
     DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    ISSUE_YAML_CSV_LISTS,
     SUBENTRY_TYPE_STOP,
+    YAML_DOCS_URL,
 )
 from .departure import Departure
+from .helpers import as_string_list, is_legacy_csv
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -65,15 +71,20 @@ TRANSPORT_TYPES_SCHEMA = {
     vol.Optional(CONF_TYPE_REGIONAL, default=True): cv.boolean,
 }
 
+# A list of strings, or the legacy comma-separated string it replaced. The
+# legacy form is validated but not accepted silently: see
+# `async_report_legacy_csv_lists` below.
+STRING_LIST_SCHEMA = vol.Any(cv.string, [cv.string])
+
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Optional(CONF_DEPARTURES): [
             {
                 vol.Required(CONF_DEPARTURES_NAME): cv.string,
                 vol.Required(CONF_DEPARTURES_STOP_ID): cv.positive_int,
-                vol.Optional(CONF_DEPARTURES_DIRECTION): cv.string,
-                vol.Optional(CONF_DEPARTURES_EXCLUDED_STOPS): cv.string,
-                vol.Optional(CONF_DEPARTURES_EXCLUDED_LINES): cv.string,
+                vol.Optional(CONF_DEPARTURES_DIRECTION): STRING_LIST_SCHEMA,
+                vol.Optional(CONF_DEPARTURES_EXCLUDED_STOPS): STRING_LIST_SCHEMA,
+                vol.Optional(CONF_DEPARTURES_EXCLUDED_LINES): STRING_LIST_SCHEMA,
                 vol.Optional(CONF_DEPARTURES_DURATION): cv.positive_int,
                 vol.Optional(CONF_DEPARTURES_WALKING_TIME, default=1): cv.positive_int,
                 vol.Optional(CONF_SHOW_API_LINE_COLORS, default=False): cv.boolean,
@@ -82,6 +93,43 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         ]
     }
 )
+
+
+@callback
+def async_report_legacy_csv_lists(
+    hass: HomeAssistant, departures: list[Mapping[str, Any]]
+) -> None:
+    """Raise a repair issue for YAML stops still using comma-separated strings.
+
+    Config entries are migrated in place, but YAML is read back from
+    `configuration.yaml` on every start, so it can only be pointed at the stops
+    that need editing. The issue is not persistent: it is re-raised on the next
+    start iff the old form is still there.
+    """
+    stops: set[str] = set()
+    options: set[str] = set()
+    for departure in departures:
+        legacy = [key for key in CONF_LIST_OPTIONS if is_legacy_csv(departure.get(key))]
+        if legacy:
+            stops.add(departure[CONF_DEPARTURES_NAME])
+            options.update(legacy)
+
+    if not stops:
+        return
+
+    ir.async_create_issue(
+        hass,
+        DOMAIN,
+        ISSUE_YAML_CSV_LISTS,
+        is_fixable=False,
+        severity=ir.IssueSeverity.WARNING,
+        translation_key=ISSUE_YAML_CSV_LISTS,
+        translation_placeholders={
+            "stops": ", ".join(sorted(stops)),
+            "options": ", ".join(sorted(options)),
+        },
+        learn_more_url=YAML_DOCS_URL,
+    )
 
 
 # Kept here for backwards compatability with yaml users
@@ -93,6 +141,7 @@ async def async_setup_platform(
 ) -> None:
     """Set up the sensor platform."""
     if CONF_DEPARTURES in config:
+        async_report_legacy_csv_lists(hass, config[CONF_DEPARTURES])
         for departure in config[CONF_DEPARTURES]:
             async_add_entities([TransportSensor(hass, departure)], True)
 
@@ -137,10 +186,12 @@ class TransportSensor(SensorEntity):
             minutes=config.get(CONF_FALLBACK_TIME) or DEFAULT_FALLBACK_TIME
         )
         self.stop_id: int = config[CONF_DEPARTURES_STOP_ID]
-        self.excluded_stops: str | None = config.get(CONF_DEPARTURES_EXCLUDED_STOPS)
-        self.excluded_lines: str | None = config.get(CONF_DEPARTURES_EXCLUDED_LINES)
+        # Config entries store these as lists; YAML may still hold the legacy
+        # comma-separated string, which `as_string_list` splits for us.
+        self.excluded_stops = as_string_list(config.get(CONF_DEPARTURES_EXCLUDED_STOPS))
+        self.excluded_lines = as_string_list(config.get(CONF_DEPARTURES_EXCLUDED_LINES))
         self.sensor_name: str | None = config.get(CONF_DEPARTURES_NAME)
-        self.direction: str | None = config.get(CONF_DEPARTURES_DIRECTION)
+        self.directions = as_string_list(config.get(CONF_DEPARTURES_DIRECTION))
         self.duration: int | None = config.get(CONF_DEPARTURES_DURATION)
         self.walking_time: int = config.get(CONF_DEPARTURES_WALKING_TIME) or 1
         # we add +1 minute anyway to delete the "just gone" transport
@@ -244,38 +295,25 @@ class TransportSensor(SensorEntity):
             _LOGGER.warning(f"No departures found for {self.stop_id}")
             return []
 
-        if self.excluded_stops is None:
-            excluded_stops = []
-        else:
-            excluded_stops = self.excluded_stops.split(",")
-
-        if self.excluded_lines is None:
-            excluded_lines = []
-        else:
-            excluded_lines = self.excluded_lines.split(",")
-
         # convert api data into objects
         return [
             Departure.from_dict(departure)
             for departure in (departures.get("departures") or [])
-            if departure.get("stop", {}).get("id") not in excluded_stops
-            and departure.get("line", {}).get("name") not in excluded_lines
+            if departure.get("stop", {}).get("id") not in self.excluded_stops
+            and departure.get("line", {}).get("name") not in self.excluded_lines
         ]
 
     async def fetch_departures(self) -> list[Departure] | None:
         departures = []
 
-        if self.direction is None:
-            res = await self.fetch_directional_departure(self.direction)
+        # If no direction filter is set, set the directions to [None], so
+        # we make one request with no direction filter.
+        directions: list[str] | list[None] = self.directions or [None]
+        for direction in directions:
+            res = await self.fetch_directional_departure(direction)
             if res is None:
                 return None
             departures += res
-        else:
-            for direction in self.direction.split(","):
-                res = await self.fetch_directional_departure(direction)
-                if res is None:
-                    return None
-                departures += res
 
         # Get rid of duplicates
         # Duplicates should only exist for the Ringbahn and filtering for both
