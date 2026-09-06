@@ -57,9 +57,9 @@ Repeat for every stop you want. All stops under one hub share the same API endpo
 | Setting                               | Default | Description |
 | ------------------------------------- | ------- | ----------- |
 | Walking time in minutes               | `1`     | Time needed to walk to the stop. Departures you could not reach in time are hidden. |
-| Filter departures by direction        | not set | Comma-separated list of `stop_id`s along the intended lines, or their final destinations. See [How do I find my stop_id?](#how-do-i-find-my-stop_id). |
-| Exclude nearby stops with IDs         | not set | Comma-separated list of `stop_id`s to drop from the results. Use this when the API returns departures from nearby stops. |
-| Exclude lines by name                 | not set | Comma-separated list of line names, e.g. `S41`. |
+| Filter departures by direction        | not set | `stop_id`s along the intended lines, or their final destinations. Add one value per entry. See [How do I find my stop_id?](#how-do-i-find-my-stop_id). |
+| Exclude nearby stops with IDs         | not set | `stop_id`s to drop from the results. Add one value per entry. Use this when the API returns departures from nearby stops. |
+| Exclude lines by name                 | not set | Line names to drop from the results, e.g. `S41`. Add one value per entry. |
 | Show departures for how many minutes? | not set | How far into the future to fetch departures. Leave empty to use the API's own default window. |
 | Enable official VBB line colors       | off     | Use the colors reported by the API instead of the predefined ones. |
 | Transport types                       | all on  | Which products to include: S-Bahn, U-Bahn, Tram, Bus, Ferry, IC/ICE, RB/RE. |
@@ -81,6 +81,7 @@ A home assistant addon for the server is also available at https://github.com/Co
 
 Older versions created **one config entry per stop**. On first start after the update, all of those entries are migrated automatically into a **single hub**, with each old entry becoming a stop underneath it. Your entities keep their IDs, so history and dashboards are unaffected.
 
+The direction and exclusion filters used to be stored as a single comma-separated string. They are now lists, and existing stops are converted automatically on the same first start. Only [YAML configurations](#-yaml-configuration-legacy) have to be updated by hand.
 
 Downgrading to a pre-hub version is not supported; the config entries cannot be converted back.
 
@@ -94,20 +95,28 @@ sensor:
     departures:
       - name: "S+U Schönhauser Allee" # free-form name, only for display purposes
         stop_id: 900110001 # actual Stop ID for the API
-        # direction: 900110002,900007102 # Optional stop_id to limit departures for a specific direction (same URL as to find the stop_id), multiple Values can be specified using a comma separated list
-        # excluded_lines: S41 # Optional comma separated list of line names to exclude
+        # direction: # Optional list of stop_ids to limit departures for specific directions (same URL as to find the stop_id)
+        #   - 900110002
+        #   - 900007102
+        # excluded_lines: # Optional list of line names to exclude
+        #   - S41
         # walking_time: 5 # Optional parameter with value in minutes that hides transport closer than N minutes
         # suburban: false # Optionally hide transport options
         # show_official_line_colors: true # Optionally enable official VBB line colors. By default predefined colors will be used.
         # duration: 30 # Optional (default 10), query departures for how many minutes from now?
       - name: "Stargarder Str." # currently you have to add more than one stop to track
         stop_id: 900000110501
-        # direction: 900000100002 # Optional stop_id to limit departures for a specific direction (same URL as to find the stop_id), multiple Values can be specified using a comma separated list
-        # excluded_stops: 900110502,900007102 # Exclude these stop IDs from the departures, duplicate departures may be shown for nearby stations
+        # direction: # Optional list of stop_ids to limit departures for specific directions (same URL as to find the stop_id)
+        #   - 900000100002
+        # excluded_stops: # Exclude these stop IDs from the departures, duplicate departures may be shown for nearby stations
+        #   - 900110502
+        #   - 900007102
         # walking_time: 5 # Optional parameter with value in minutes that hide transport closer than N minutes
         # show_official_line_colors: true # Optionally enable official VBB line colors. By default predefined colors will be used.
         # duration: 30 # Optional (default 10), query departures for how many minutes from now?
 ```
+
+`direction`, `excluded_stops` and `excluded_lines` used to be written as a single comma-separated string (`excluded_lines: S41,S42`). That form still works, but it is deprecated and will be removed in a future release — Home Assistant raises a repair notice under `Settings` → `Devices & services` → `Repairs` naming the stops that still use it. Rewrite each of them as a list as shown above and restart. A single value can stay a plain scalar (`excluded_lines: S41`).
 
 To install manually, copy the whole [berlin_transport](./custom_components/) directory into the `custom_components` folder of your Home Assistant installation (create it next to `configuration.yaml` if it doesn't exist), then restart Home Assistant.
 
