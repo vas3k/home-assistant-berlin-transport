@@ -1,7 +1,5 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
-from __future__ import annotations
-
 import logging
 from datetime import datetime, timedelta
 from typing import Any, Mapping

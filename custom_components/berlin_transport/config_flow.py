@@ -1,7 +1,5 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any, Optional
 
@@ -163,7 +161,7 @@ class TransportConfigFlowHandler(
     @callback
     def async_get_options_flow(
         config_entry: config_entries.ConfigEntry,  # pylint: disable=unused-argument
-    ) -> OptionsFlowHandler:
+    ) -> "OptionsFlowHandler":
         """Get the options flow for this handler."""
         return OptionsFlowHandler()
 
