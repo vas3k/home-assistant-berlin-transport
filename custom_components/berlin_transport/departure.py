@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from functools import cached_property
 
 from .const import DEFAULT_ICON, TRANSPORT_TYPE_VISUALS
 
@@ -13,7 +14,6 @@ class Departure:
     line_name: str
     line_type: str
     timestamp: datetime
-    time: datetime
     direction: str | None = None
     icon: str | None = None
     bg_color: str | None = None
@@ -43,7 +43,6 @@ class Departure:
             line_name=line.get("name"),
             line_type=line_type,
             timestamp=timestamp,
-            time=timestamp.strftime("%H:%M"),
             direction=source.get("direction"),
             icon=line_visuals.get("icon") or DEFAULT_ICON,
             bg_color=line.get("color", {}).get("bg"),
@@ -61,6 +60,10 @@ class Departure:
             ]
             or None,
         )
+
+    @cached_property
+    def time(self) -> str:
+        return self.timestamp.strftime("%H:%M")
 
     def to_dict(self, show_api_line_colors: bool, walking_time: int):
         color = self.fallback_color
