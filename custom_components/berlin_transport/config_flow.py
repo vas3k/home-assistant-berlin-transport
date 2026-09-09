@@ -111,7 +111,7 @@ async def get_stop_id(
     except aiohttp.ClientError as ex:
         _LOGGER.warning(f"API error: {ex}")
         return []
-    except Exception as ex:
+    except Exception as ex:  # pylint: disable=broad-exception-caught
         _LOGGER.error(f"Unexpected error: {ex}")
         return []
 
