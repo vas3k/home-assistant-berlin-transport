@@ -160,7 +160,7 @@ class TransportConfigFlowHandler(
     @staticmethod
     @callback
     def async_get_options_flow(
-        config_entry: config_entries.ConfigEntry,  # pylint: disable=unused-argument
+        config_entry: config_entries.ConfigEntry,
     ) -> "OptionsFlowHandler":
         """Get the options flow for this handler."""
         return OptionsFlowHandler()
@@ -169,7 +169,7 @@ class TransportConfigFlowHandler(
     @callback
     def async_get_supported_subentry_types(
         cls,
-        config_entry: config_entries.ConfigEntry,  # pylint: disable=unused-argument
+        config_entry: config_entries.ConfigEntry,
     ) -> dict[str, type[config_entries.ConfigSubentryFlow]]:
         """Stops are added as subentries under the hub."""
         return {SUBENTRY_TYPE_STOP: StopSubentryFlowHandler}
@@ -290,9 +290,7 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
         )
 
 
-class OptionsFlowHandler(
-    config_entries.OptionsFlow
-):  # pylint: disable=too-few-public-methods
+class OptionsFlowHandler(config_entries.OptionsFlow):
     """Edit the hub-level (shared) settings for an existing entry."""
 
     async def async_step_init(
