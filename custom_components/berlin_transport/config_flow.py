@@ -1,6 +1,7 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
 import logging
+from collections.abc import Mapping
 from typing import Any
 
 import aiohttp
@@ -124,16 +125,18 @@ async def get_stop_id(
     ]
 
 
+def stop_label(stop: Mapping[str, Any]) -> str:
+    """The `Name [id]` label a stop is shown as in the drop-down."""
+    return f"{stop[CONF_DEPARTURES_NAME]} [{stop[CONF_DEPARTURES_STOP_ID]}]"
+
+
 def list_stops(stops: list[dict[str, Any]]) -> vol.Schema:
     """Provides a drop down list of stops"""
     schema = vol.Schema(
         {
             vol.Required(CONF_SELECTED_STOP): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[
-                        f"{stop[CONF_DEPARTURES_NAME]} [{stop[CONF_DEPARTURES_STOP_ID]}]"
-                        for stop in stops
-                    ],
+                    options=[stop_label(stop) for stop in stops],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             )
@@ -238,8 +241,7 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
         selected_stop = next(
             (stop[CONF_DEPARTURES_NAME], stop[CONF_DEPARTURES_STOP_ID])
             for stop in self.data[CONF_FOUND_STOPS]
-            if user_input[CONF_SELECTED_STOP]
-            == f"{stop[CONF_DEPARTURES_NAME]} [{stop[CONF_DEPARTURES_STOP_ID]}]"
+            if user_input[CONF_SELECTED_STOP] == stop_label(stop)
         )
         (
             self.data[CONF_DEPARTURES_NAME],

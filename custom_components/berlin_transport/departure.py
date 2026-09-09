@@ -104,7 +104,9 @@ class Departure:
         d = self.to_dict(show_api_line_colors=False, walking_time=0)
         # Warnings are dicts (not hashable), replace with a sorted tuple of IDs
         d["warnings"] = (
-            tuple(sorted(w["id"] for w in d["warnings"])) if d["warnings"] else None  # type: ignore
+            tuple(sorted(w["id"] for w in d["warnings"]))  # type: ignore
+            if d["warnings"]
+            else None
         )
         # Dictionaries are not hashable, so use the items, sort them for
         # reproducibility. Convert it to a tuple, since lists are also not
