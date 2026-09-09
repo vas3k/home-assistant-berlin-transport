@@ -2,7 +2,7 @@
 
 import logging
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, Self
 
 import aiohttp
 import async_timeout
@@ -146,19 +146,16 @@ def list_stops(stops: list[dict[str, Any]]) -> vol.Schema:
     return schema
 
 
-class TransportConfigFlowHandler(
-    config_entries.ConfigFlow,
-    domain=DOMAIN,
-):  # pylint: disable=abstract-method
-    """Create a hub entry that holds the API endpoint and shared settings.
-
-    `is_matching` is left unimplemented on purpose: the hub is only ever set up
-    by the user, never through discovery.
-    """
+class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
+    """Create a hub entry that holds the API endpoint and shared settings."""
 
     VERSION = CONFIG_ENTRY_VERSION
 
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
+
+    def is_matching(self, other_flow: Self) -> bool:
+        """Never matches: the hub is only ever set up by the user, not discovered."""
+        return False
 
     @staticmethod
     @callback
