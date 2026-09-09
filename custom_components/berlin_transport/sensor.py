@@ -51,7 +51,7 @@ from .const import (
     SUBENTRY_TYPE_STOP,
     YAML_DOCS_URL,
 )
-from .departure import Departure
+from .departure import Departure, DepartureDict
 from .helpers import as_string_list, is_legacy_csv
 
 _LOGGER = logging.getLogger(__name__)
@@ -221,7 +221,7 @@ class TransportSensor(SensorEntity):
         return "N/A"
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, list[DepartureDict]]:
         return {
             "departures": [
                 departure.to_dict(self.show_api_line_colors, self.walking_time)

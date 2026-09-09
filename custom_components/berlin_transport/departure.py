@@ -1,9 +1,22 @@
 from dataclasses import dataclass
 from datetime import datetime
 from functools import cached_property
-from typing import Any
+from typing import Any, TypedDict
 
 from .const import DEFAULT_ICON, TRANSPORT_TYPE_VISUALS
+
+
+class DepartureDict(TypedDict):
+    line_name: str
+    line_type: str
+    time: str
+    timestamp: datetime
+    direction: str | None
+    color: str | None
+    cancelled: bool
+    delay: int | None
+    warnings: list[dict[str, str]] | None
+    walking_time: int
 
 
 @dataclass
@@ -66,7 +79,7 @@ class Departure:
     def time(self) -> str:
         return self.timestamp.strftime("%H:%M")
 
-    def to_dict(self, show_api_line_colors: bool, walking_time: int):
+    def to_dict(self, show_api_line_colors: bool, walking_time: int) -> DepartureDict:
         color = self.fallback_color
         if show_api_line_colors and self.bg_color is not None:
             color = self.bg_color
