@@ -1,6 +1,7 @@
 """Shared helpers for the Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from .const import CONF_LIST_OPTIONS
 
