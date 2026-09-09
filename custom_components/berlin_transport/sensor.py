@@ -229,7 +229,7 @@ class TransportSensor(SensorEntity):
             ]
         }
 
-    async def async_update(self):
+    async def async_update(self) -> None:
         departures = await self.fetch_departures()
         current_time = datetime.now().astimezone()
         if departures is None:
@@ -320,7 +320,7 @@ class TransportSensor(SensorEntity):
 
         return sorted(deduplicated_departures, key=lambda d: d.timestamp)
 
-    def next_departure(self):
+    def next_departure(self) -> Departure | None:
         if self.departures and isinstance(self.departures, list):
             return self.departures[0]
         return None

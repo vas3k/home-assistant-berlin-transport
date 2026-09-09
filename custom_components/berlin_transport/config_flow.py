@@ -1,7 +1,7 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import aiohttp
 import async_timeout
@@ -92,10 +92,10 @@ NAME_SCHEMA = vol.Schema(
 
 async def get_stop_id(
     session: aiohttp.ClientSession,
-    name,
+    name: str,
     api_endpoint: str = DEFAULT_API_ENDPOINT,
     max_results: int = DEFAULT_API_MAX_RESULTS,
-) -> Optional[list[dict[str, Any]]]:
+) -> list[dict[str, Any]]:
     try:
         async with async_timeout.timeout(30):
             response = await session.get(
@@ -124,7 +124,7 @@ async def get_stop_id(
     ]
 
 
-def list_stops(stops) -> Optional[vol.Schema]:
+def list_stops(stops: list[dict[str, Any]]) -> vol.Schema:
     """Provides a drop down list of stops"""
     schema = vol.Schema(
         {

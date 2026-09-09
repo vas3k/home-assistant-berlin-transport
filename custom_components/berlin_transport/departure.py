@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from functools import cached_property
+from typing import Any
 
 from .const import DEFAULT_ICON, TRANSPORT_TYPE_VISUALS
 
@@ -14,19 +15,19 @@ class Departure:
     line_name: str
     line_type: str
     timestamp: datetime
+    icon: str
     direction: str | None = None
-    icon: str | None = None
     bg_color: str | None = None
     fallback_color: str | None = None
     location: tuple[float, float] | None = None
     cancelled: bool = False
     delay: int | None = None
-    warnings: list[dict] | None = None
+    warnings: list[dict[str, str]] | None = None
 
     @classmethod
-    def from_dict(cls, source):
+    def from_dict(cls, source: dict[str, Any]) -> "Departure":
         line = source.get("line") or {}
-        line_type = line.get("product")
+        line_type: str = line.get("product")  # type: ignore
         line_visuals = TRANSPORT_TYPE_VISUALS.get(line_type) or {}
         when = source.get("when") or source.get("plannedWhen")
         if when is None:
@@ -40,17 +41,17 @@ class Departure:
 
         return cls(
             trip_id=source.get("tripId", "unknown"),
-            line_name=line.get("name"),
+            line_name=line.get("name"),  # type: ignore
             line_type=line_type,
             timestamp=timestamp,
             direction=source.get("direction"),
             icon=line_visuals.get("icon") or DEFAULT_ICON,
             bg_color=line.get("color", {}).get("bg"),
             fallback_color=line_visuals.get("color"),
-            location=[
+            location=(
                 source.get("currentTripPosition", {}).get("latitude") or 0.0,
                 source.get("currentTripPosition", {}).get("longitude") or 0.0,
-            ],
+            ),
             cancelled=source.get("cancelled", False),
             delay=source.get("delay", None),
             warnings=[
@@ -84,13 +85,13 @@ class Departure:
 
     # Make the object hashable and use all infos that can be displayed in the
     # frontend
-    def __hash__(self):
+    def __hash__(self) -> int:
         # The value of colors and walking time doesn't matter, it just needs to
         # be the same for all evaluations of this function
         d = self.to_dict(show_api_line_colors=False, walking_time=0)
         # Warnings are dicts (not hashable), replace with a sorted tuple of IDs
         d["warnings"] = (
-            tuple(sorted(w["id"] for w in d["warnings"])) if d["warnings"] else None
+            tuple(sorted(w["id"] for w in d["warnings"])) if d["warnings"] else None  # type: ignore
         )
         # Dictionaries are not hashable, so use the items, sort them for
         # reproducibility. Convert it to a tuple, since lists are also not
