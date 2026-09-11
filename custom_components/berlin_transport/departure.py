@@ -52,6 +52,15 @@ class Departure:
             except ValueError:
                 timestamp = datetime.now().astimezone()
 
+        current_trip_position = source.get("currentTripPosition", {})
+        latitude = current_trip_position.get("latitude")
+        longitude = current_trip_position.get("longitude")
+        location = (
+            (latitude, longitude)
+            if latitude is not None and longitude is not None
+            else None
+        )
+
         return cls(
             trip_id=source.get("tripId", "unknown"),
             line_name=line.get("name"),  # type: ignore
@@ -61,10 +70,7 @@ class Departure:
             icon=line_visuals.get("icon") or DEFAULT_ICON,
             bg_color=line.get("color", {}).get("bg"),
             fallback_color=line_visuals.get("color"),
-            location=(
-                source.get("currentTripPosition", {}).get("latitude") or 0.0,
-                source.get("currentTripPosition", {}).get("longitude") or 0.0,
-            ),
+            location=location,
             cancelled=source.get("cancelled", False),
             delay=source.get("delay", None),
             warnings=[
