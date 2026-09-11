@@ -30,7 +30,7 @@ from .const import (
     DEFAULT_API_ENDPOINT,
     DEFAULT_API_MAX_RESULTS,
     DEFAULT_FALLBACK_TIME,
-    DOMAIN,  # noqa
+    DOMAIN,
     SUBENTRY_TYPE_STOP,
 )
 from .sensor import TRANSPORT_TYPES_SCHEMA

@@ -16,7 +16,7 @@ from .const import (
     CONF_UNIQUE_ID,
     CONFIG_ENTRY_VERSION,
     DEFAULT_API_ENDPOINT,
-    DOMAIN,  # noqa
+    DOMAIN,
     SUBENTRY_TYPE_STOP,
 )
 from .helpers import normalized_list_options
