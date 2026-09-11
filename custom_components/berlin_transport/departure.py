@@ -102,13 +102,14 @@ class Departure:
         # The value of colors and walking time doesn't matter, it just needs to
         # be the same for all evaluations of this function
         d = self.to_dict(show_api_line_colors=False, walking_time=0)
+        # Copy to a normal dictionary, so we don't have type errors when
+        # exchanging warnings with a hashable tuple instead of a dict
+        hashable = dict(d)
         # Warnings are dicts (not hashable), replace with a sorted tuple of IDs
-        d["warnings"] = (
-            tuple(sorted(w["id"] for w in d["warnings"]))  # type: ignore
-            if d["warnings"]
-            else None
+        hashable["warnings"] = (
+            tuple(sorted(w["id"] for w in d["warnings"])) if d["warnings"] else None
         )
         # Dictionaries are not hashable, so use the items, sort them for
         # reproducibility. Convert it to a tuple, since lists are also not
         # hashable
-        return hash(tuple(sorted(d.items())))
+        return hash(tuple(sorted(hashable.items())))
