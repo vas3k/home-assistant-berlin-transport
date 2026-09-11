@@ -1,10 +1,9 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
-from __future__ import annotations
-
 import logging
+from collections.abc import Mapping
 from datetime import datetime, timedelta
-from typing import Any, Mapping
+from typing import Any
 
 import aiohttp
 import async_timeout
@@ -53,7 +52,7 @@ from .const import (
     SUBENTRY_TYPE_STOP,
     YAML_DOCS_URL,
 )
-from .departure import Departure
+from .departure import Departure, DepartureDict
 from .helpers import as_string_list, is_legacy_csv
 
 _LOGGER = logging.getLogger(__name__)
@@ -223,7 +222,7 @@ class TransportSensor(SensorEntity):
         return "N/A"
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, list[DepartureDict]]:
         return {
             "departures": [
                 departure.to_dict(self.show_api_line_colors, self.walking_time)
@@ -231,7 +230,7 @@ class TransportSensor(SensorEntity):
             ]
         }
 
-    async def async_update(self):
+    async def async_update(self) -> None:
         departures = await self.fetch_departures()
         current_time = datetime.now().astimezone()
         if departures is None:
@@ -287,7 +286,7 @@ class TransportSensor(SensorEntity):
         except aiohttp.ClientError as ex:
             _LOGGER.warning(f"API error: {ex}")
             return None
-        except Exception as ex:
+        except Exception as ex:  # pylint: disable=broad-exception-caught
             _LOGGER.error(f"Unexpected error: {ex}")
             return None
 
@@ -322,7 +321,7 @@ class TransportSensor(SensorEntity):
 
         return sorted(deduplicated_departures, key=lambda d: d.timestamp)
 
-    def next_departure(self):
+    def next_departure(self) -> Departure | None:
         if self.departures and isinstance(self.departures, list):
             return self.departures[0]
         return None

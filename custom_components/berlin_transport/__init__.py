@@ -1,7 +1,5 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
-from __future__ import annotations
-
 import logging
 from types import MappingProxyType
 
@@ -12,13 +10,13 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.typing import ConfigType
 
 from .const import (
-    DOMAIN,  # noqa
     CONF_API_ENDPOINT,
     CONF_API_MAX_RESULTS,
     CONF_FALLBACK_TIME,
     CONF_UNIQUE_ID,
     CONFIG_ENTRY_VERSION,
     DEFAULT_API_ENDPOINT,
+    DOMAIN,
     SUBENTRY_TYPE_STOP,
 )
 from .helpers import normalized_list_options

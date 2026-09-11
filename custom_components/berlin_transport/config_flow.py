@@ -1,9 +1,8 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
-from __future__ import annotations
-
 import logging
-from typing import Any, Optional
+from collections.abc import Mapping
+from typing import Any, Self
 
 import aiohttp
 import async_timeout
@@ -31,7 +30,7 @@ from .const import (
     DEFAULT_API_ENDPOINT,
     DEFAULT_API_MAX_RESULTS,
     DEFAULT_FALLBACK_TIME,
-    DOMAIN,  # noqa
+    DOMAIN,
     SUBENTRY_TYPE_STOP,
 )
 from .sensor import TRANSPORT_TYPES_SCHEMA
@@ -94,10 +93,10 @@ NAME_SCHEMA = vol.Schema(
 
 async def get_stop_id(
     session: aiohttp.ClientSession,
-    name,
+    name: str,
     api_endpoint: str = DEFAULT_API_ENDPOINT,
     max_results: int = DEFAULT_API_MAX_RESULTS,
-) -> Optional[list[dict[str, Any]]]:
+) -> list[dict[str, Any]]:
     try:
         async with async_timeout.timeout(30):
             response = await session.get(
@@ -112,7 +111,7 @@ async def get_stop_id(
     except aiohttp.ClientError as ex:
         _LOGGER.warning(f"API error: {ex}")
         return []
-    except Exception as ex:
+    except Exception as ex:  # pylint: disable=broad-exception-caught
         _LOGGER.error(f"Unexpected error: {ex}")
         return []
 
@@ -126,16 +125,18 @@ async def get_stop_id(
     ]
 
 
-def list_stops(stops) -> Optional[vol.Schema]:
+def stop_label(stop: Mapping[str, Any]) -> str:
+    """The `Name [id]` label a stop is shown as in the drop-down."""
+    return f"{stop[CONF_DEPARTURES_NAME]} [{stop[CONF_DEPARTURES_STOP_ID]}]"
+
+
+def list_stops(stops: list[dict[str, Any]]) -> vol.Schema:
     """Provides a drop down list of stops"""
     schema = vol.Schema(
         {
             vol.Required(CONF_SELECTED_STOP): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[
-                        f"{stop[CONF_DEPARTURES_NAME]} [{stop[CONF_DEPARTURES_STOP_ID]}]"
-                        for stop in stops
-                    ],
+                    options=[stop_label(stop) for stop in stops],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             )
@@ -145,25 +146,22 @@ def list_stops(stops) -> Optional[vol.Schema]:
     return schema
 
 
-class TransportConfigFlowHandler(
-    config_entries.ConfigFlow,
-    domain=DOMAIN,
-):  # pylint: disable=abstract-method
-    """Create a hub entry that holds the API endpoint and shared settings.
-
-    `is_matching` is left unimplemented on purpose: the hub is only ever set up
-    by the user, never through discovery.
-    """
+class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
+    """Create a hub entry that holds the API endpoint and shared settings."""
 
     VERSION = CONFIG_ENTRY_VERSION
 
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
+    def is_matching(self, other_flow: Self) -> bool:
+        """Never matches: the hub is only ever set up by the user, not discovered."""
+        return False
+
     @staticmethod
     @callback
     def async_get_options_flow(
-        config_entry: config_entries.ConfigEntry,  # pylint: disable=unused-argument
-    ) -> OptionsFlowHandler:
+        config_entry: config_entries.ConfigEntry,
+    ) -> "OptionsFlowHandler":
         """Get the options flow for this handler."""
         return OptionsFlowHandler()
 
@@ -171,7 +169,7 @@ class TransportConfigFlowHandler(
     @callback
     def async_get_supported_subentry_types(
         cls,
-        config_entry: config_entries.ConfigEntry,  # pylint: disable=unused-argument
+        config_entry: config_entries.ConfigEntry,
     ) -> dict[str, type[config_entries.ConfigSubentryFlow]]:
         """Stops are added as subentries under the hub."""
         return {SUBENTRY_TYPE_STOP: StopSubentryFlowHandler}
@@ -240,8 +238,7 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
         selected_stop = next(
             (stop[CONF_DEPARTURES_NAME], stop[CONF_DEPARTURES_STOP_ID])
             for stop in self.data[CONF_FOUND_STOPS]
-            if user_input[CONF_SELECTED_STOP]
-            == f"{stop[CONF_DEPARTURES_NAME]} [{stop[CONF_DEPARTURES_STOP_ID]}]"
+            if user_input[CONF_SELECTED_STOP] == stop_label(stop)
         )
         (
             self.data[CONF_DEPARTURES_NAME],
@@ -292,9 +289,7 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
         )
 
 
-class OptionsFlowHandler(
-    config_entries.OptionsFlow
-):  # pylint: disable=too-few-public-methods
+class OptionsFlowHandler(config_entries.OptionsFlow):
     """Edit the hub-level (shared) settings for an existing entry."""
 
     async def async_step_init(
