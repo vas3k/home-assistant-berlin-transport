@@ -1,11 +1,11 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
+import asyncio
 import logging
 from collections.abc import Mapping
 from typing import Any, Self
 
 import aiohttp
-import async_timeout
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
@@ -98,7 +98,7 @@ async def get_stop_id(
     max_results: int = DEFAULT_API_MAX_RESULTS,
 ) -> list[dict[str, Any]]:
     try:
-        async with async_timeout.timeout(30):
+        async with asyncio.timeout(30):
             response = await session.get(
                 url=f"{api_endpoint}/locations",
                 params={
@@ -108,6 +108,9 @@ async def get_stop_id(
             )
             response.raise_for_status()
             stops = await response.json()
+    except TimeoutError as ex:
+        _LOGGER.warning(f"API timeout: {ex}")
+        return []
     except aiohttp.ClientError as ex:
         _LOGGER.warning(f"API error: {ex}")
         return []

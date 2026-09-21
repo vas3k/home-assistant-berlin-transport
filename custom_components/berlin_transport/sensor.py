@@ -1,12 +1,12 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
+import asyncio
 import logging
 from collections.abc import Mapping
 from datetime import datetime, timedelta
 from typing import Any
 
 import aiohttp
-import async_timeout
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
@@ -276,13 +276,17 @@ class TransportSensor(SensorEntity):
             if direction is not None:
                 params["direction"] = direction
 
-            async with async_timeout.timeout(30):
+            async with asyncio.timeout(30):
                 response = await self.session.get(
                     url=f"{self.api_endpoint}/stops/{self.stop_id}/departures",
                     params=params,
                 )
                 response.raise_for_status()
                 departures = await response.json()
+
+        except TimeoutError as ex:
+            _LOGGER.warning(f"API timeout: {ex}")
+            return None
         except aiohttp.ClientError as ex:
             _LOGGER.warning(f"API error: {ex}")
             return None
