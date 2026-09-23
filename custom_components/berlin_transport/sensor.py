@@ -1,6 +1,5 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
-import asyncio
 import logging
 from collections.abc import Mapping
 from datetime import datetime, timedelta
@@ -13,13 +12,13 @@ from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import issue_registry as ir
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity_platform import (
     AddConfigEntryEntitiesCallback,
     AddEntitiesCallback,
 )
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
+from .api import TransportApi, async_create_api
 from .const import (
     CONF_API_ENDPOINT,
     CONF_API_MAX_RESULTS,
@@ -141,8 +140,11 @@ async def async_setup_platform(
     """Set up the sensor platform."""
     if CONF_DEPARTURES in config:
         async_report_legacy_csv_lists(hass, config[CONF_DEPARTURES])
+        # yaml configuration has no option to set the endpoint,
+        # so we use one api client across all of them with the default endpoint.
+        api = await async_create_api(hass, DEFAULT_API_ENDPOINT)
         for departure in config[CONF_DEPARTURES]:
-            async_add_entities([TransportSensor(hass, departure)], True)
+            async_add_entities([TransportSensor(hass, departure, api)], True)
 
 
 async def async_setup_entry(
@@ -153,13 +155,16 @@ async def async_setup_entry(
     # The entry is a hub: shared settings live on it, each stop is a subentry.
     # Options (edited via the options flow) override the values stored at setup.
     hub_config = {**config_entry.data, **config_entry.options}
+    api = await async_create_api(
+        hass, hub_config.get(CONF_API_ENDPOINT) or DEFAULT_API_ENDPOINT
+    )
     for subentry_id, subentry in config_entry.subentries.items():
         if subentry.subentry_type != SUBENTRY_TYPE_STOP:
             continue
         config = {**hub_config, **subentry.data}
         unique_id = subentry.data.get(CONF_UNIQUE_ID) or subentry_id
         async_add_entities(
-            [TransportSensor(hass, config, unique_id)],
+            [TransportSensor(hass, config, api, unique_id)],
             update_before_add=True,
             config_subentry_id=subentry_id,
         )
@@ -172,12 +177,12 @@ class TransportSensor(SensorEntity):
         self,
         hass: HomeAssistant,
         config: Mapping[str, Any],
+        api: TransportApi,
         entry_id: str | None = None,
     ) -> None:
         self.hass: HomeAssistant = hass
         self.config = config
         self._entry_id = entry_id
-        self.api_endpoint: str = config.get(CONF_API_ENDPOINT) or DEFAULT_API_ENDPOINT
         self.api_max_results: int = (
             config.get(CONF_API_MAX_RESULTS) or DEFAULT_API_MAX_RESULTS
         )
@@ -195,7 +200,7 @@ class TransportSensor(SensorEntity):
         self.walking_time: int = config.get(CONF_DEPARTURES_WALKING_TIME) or 1
         # we add +1 minute anyway to delete the "just gone" transport
         self.show_api_line_colors: bool = config.get(CONF_SHOW_API_LINE_COLORS) or False
-        self.session = async_get_clientsession(hass)
+        self.api = api
         self.last_update_success: datetime | None = None
         self._attr_available: bool = True
 
@@ -276,14 +281,7 @@ class TransportSensor(SensorEntity):
             if direction is not None:
                 params["direction"] = direction
 
-            async with asyncio.timeout(30):
-                response = await self.session.get(
-                    url=f"{self.api_endpoint}/stops/{self.stop_id}/departures",
-                    params=params,
-                )
-                response.raise_for_status()
-                departures = await response.json()
-
+            departures = await self.api.departures(self.stop_id, params)
         except TimeoutError as ex:
             _LOGGER.warning(f"API timeout: {ex}")
             return None

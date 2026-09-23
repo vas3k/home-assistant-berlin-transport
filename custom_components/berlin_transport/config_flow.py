@@ -1,6 +1,5 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
-import asyncio
 import logging
 from collections.abc import Mapping
 from typing import Any, Self
@@ -11,8 +10,8 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers import selector
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
+from .api import TransportApi, async_create_api
 from .const import (
     CONF_API_ENDPOINT,
     CONF_API_MAX_RESULTS,
@@ -92,22 +91,12 @@ NAME_SCHEMA = vol.Schema(
 
 
 async def get_stop_id(
-    session: aiohttp.ClientSession,
+    api: TransportApi,
     name: str,
-    api_endpoint: str = DEFAULT_API_ENDPOINT,
     max_results: int = DEFAULT_API_MAX_RESULTS,
 ) -> list[dict[str, Any]]:
     try:
-        async with asyncio.timeout(30):
-            response = await session.get(
-                url=f"{api_endpoint}/locations",
-                params={
-                    "query": name,
-                    "results": max_results,
-                },
-            )
-            response.raise_for_status()
-            stops = await response.json()
+        stops = await api.locations(name, max_results)
     except TimeoutError as ex:
         _LOGGER.warning(f"API timeout: {ex}")
         return []
@@ -221,9 +210,9 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
             )
 
         api_endpoint, max_results = self._hub_search_args()
-        session = async_get_clientsession(self.hass)
+        api = await async_create_api(self.hass, api_endpoint)
         self.data[CONF_FOUND_STOPS] = await get_stop_id(
-            session, user_input[CONF_SEARCH], api_endpoint, max_results
+            api, user_input[CONF_SEARCH], max_results
         )
         return await self.async_step_stop()
 

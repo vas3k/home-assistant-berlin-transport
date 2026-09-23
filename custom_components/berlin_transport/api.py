@@ -31,3 +31,7 @@ class TransportApi:
 
     async def departures(self, stop_id: int, params: Mapping[str, Any]) -> Any:
         return await self._get(f"/stops/{stop_id}/departures", params)
+
+
+async def async_create_api(hass: HomeAssistant, endpoint: str) -> TransportApi:
+    return TransportApi(async_get_clientsession(hass), endpoint)
