@@ -4,7 +4,6 @@ import logging
 from collections.abc import Mapping
 from typing import Any, Self
 
-import aiohttp
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
@@ -95,19 +94,9 @@ async def get_stop_id(
     name: str,
     max_results: int = DEFAULT_API_MAX_RESULTS,
 ) -> list[dict[str, Any]]:
-    try:
-        stops = await api.locations(name, max_results)
-    except TimeoutError as ex:
-        _LOGGER.warning(f"API timeout: {ex}")
-        return []
-    except aiohttp.ClientError as ex:
-        _LOGGER.warning(f"API error: {ex}")
-        return []
-    except Exception as ex:  # pylint: disable=broad-exception-caught
-        _LOGGER.error(f"Unexpected error: {ex}")
-        return []
+    stops = await api.locations(name, max_results) or []
 
-    _LOGGER.debug(f"OK: stops for {name}: {stops}")
+    _LOGGER.debug(f"Stops for {name}: {stops}")
 
     # convert api data into objects
     return [

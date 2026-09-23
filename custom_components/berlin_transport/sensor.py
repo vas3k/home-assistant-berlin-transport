@@ -5,7 +5,6 @@ from collections.abc import Mapping
 from datetime import datetime, timedelta
 from typing import Any
 
-import aiohttp
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
@@ -257,37 +256,29 @@ class TransportSensor(SensorEntity):
     async def fetch_directional_departure(
         self, direction: str | None
     ) -> list[Departure] | None:
-        try:
-            params: dict[str, Any] = {
-                "when": (
-                    datetime.now().astimezone() + timedelta(minutes=self.walking_time)
-                ).isoformat(),
-                "results": self.api_max_results,
-                "suburban": str(self.config.get(CONF_TYPE_SUBURBAN) or False).lower(),
-                "subway": str(self.config.get(CONF_TYPE_SUBWAY) or False).lower(),
-                "tram": str(self.config.get(CONF_TYPE_TRAM) or False).lower(),
-                "bus": str(self.config.get(CONF_TYPE_BUS) or False).lower(),
-                "ferry": str(self.config.get(CONF_TYPE_FERRY) or False).lower(),
-                "express": str(self.config.get(CONF_TYPE_EXPRESS) or False).lower(),
-                "regional": str(self.config.get(CONF_TYPE_REGIONAL) or False).lower(),
-            }
-            if self.duration is not None:
-                params["duration"] = self.duration
-            if direction is not None:
-                params["direction"] = direction
+        params: dict[str, Any] = {
+            "when": (
+                datetime.now().astimezone() + timedelta(minutes=self.walking_time)
+            ).isoformat(),
+            "results": self.api_max_results,
+            "suburban": str(self.config.get(CONF_TYPE_SUBURBAN) or False).lower(),
+            "subway": str(self.config.get(CONF_TYPE_SUBWAY) or False).lower(),
+            "tram": str(self.config.get(CONF_TYPE_TRAM) or False).lower(),
+            "bus": str(self.config.get(CONF_TYPE_BUS) or False).lower(),
+            "ferry": str(self.config.get(CONF_TYPE_FERRY) or False).lower(),
+            "express": str(self.config.get(CONF_TYPE_EXPRESS) or False).lower(),
+            "regional": str(self.config.get(CONF_TYPE_REGIONAL) or False).lower(),
+        }
+        if self.duration is not None:
+            params["duration"] = self.duration
+        if direction is not None:
+            params["direction"] = direction
 
-            departures = await self.api.departures(self.stop_id, params)
-        except TimeoutError as ex:
-            _LOGGER.warning(f"API timeout: {ex}")
-            return None
-        except aiohttp.ClientError as ex:
-            _LOGGER.warning(f"API error: {ex}")
-            return None
-        except Exception as ex:  # pylint: disable=broad-exception-caught
-            _LOGGER.error(f"Unexpected error: {ex}")
+        departures = await self.api.departures(self.stop_id, params)
+        if departures is None:
             return None
 
-        if not departures or "departures" not in departures:
+        if "departures" not in departures:
             _LOGGER.warning(f"No departures found for {self.stop_id}")
             return []
 
