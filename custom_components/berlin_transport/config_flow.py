@@ -210,6 +210,9 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
             )
 
         api_endpoint, max_results = self._hub_search_args()
+        # Build a client here instead of taking the hub's runtime_data since a
+        # stop can still be added or reconfigured while the hub is not loaded
+        # (for example when it was explicitly disabled)
         api = await async_create_api(self.hass, api_endpoint)
         self.data[CONF_FOUND_STOPS] = await get_stop_id(
             api, user_input[CONF_SEARCH], max_results

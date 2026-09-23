@@ -9,6 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.typing import ConfigType
 
+from .api import TransportConfigEntry, async_create_api
 from .const import (
     CONF_API_ENDPOINT,
     CONF_API_MAX_RESULTS,
@@ -29,8 +30,12 @@ PLATFORMS = [Platform.SENSOR]
 _HUB_KEYS = (CONF_API_ENDPOINT, CONF_API_MAX_RESULTS, CONF_FALLBACK_TIME)
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: TransportConfigEntry) -> bool:
     """Set up a config entry."""
+    hub_config = {**entry.data, **entry.options}
+    entry.runtime_data = await async_create_api(
+        hass, hub_config.get(CONF_API_ENDPOINT) or DEFAULT_API_ENDPOINT
+    )
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
     return True

@@ -9,7 +9,6 @@ import aiohttp
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.entity_platform import (
@@ -18,9 +17,8 @@ from homeassistant.helpers.entity_platform import (
 )
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from .api import TransportApi, async_create_api
+from .api import TransportApi, TransportConfigEntry, async_create_api
 from .const import (
-    CONF_API_ENDPOINT,
     CONF_API_MAX_RESULTS,
     CONF_DEPARTURES,
     CONF_DEPARTURES_DIRECTION,
@@ -149,22 +147,19 @@ async def async_setup_platform(
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    config_entry: TransportConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     # The entry is a hub: shared settings live on it, each stop is a subentry.
     # Options (edited via the options flow) override the values stored at setup.
     hub_config = {**config_entry.data, **config_entry.options}
-    api = await async_create_api(
-        hass, hub_config.get(CONF_API_ENDPOINT) or DEFAULT_API_ENDPOINT
-    )
     for subentry_id, subentry in config_entry.subentries.items():
         if subentry.subentry_type != SUBENTRY_TYPE_STOP:
             continue
         config = {**hub_config, **subentry.data}
         unique_id = subentry.data.get(CONF_UNIQUE_ID) or subentry_id
         async_add_entities(
-            [TransportSensor(hass, config, api, unique_id)],
+            [TransportSensor(hass, config, config_entry.runtime_data, unique_id)],
             update_before_add=True,
             config_subentry_id=subentry_id,
         )

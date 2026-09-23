@@ -3,6 +3,7 @@ from collections.abc import Mapping
 from typing import Any
 
 import aiohttp
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -31,6 +32,9 @@ class TransportApi:
 
     async def departures(self, stop_id: int, params: Mapping[str, Any]) -> Any:
         return await self._get(f"/stops/{stop_id}/departures", params)
+
+
+type TransportConfigEntry = ConfigEntry[TransportApi]
 
 
 async def async_create_api(hass: HomeAssistant, endpoint: str) -> TransportApi:
