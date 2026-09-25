@@ -1,18 +1,16 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
-import asyncio
 import logging
 from collections.abc import Mapping
 from typing import Any, Self
 
-import aiohttp
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers import selector
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
+from .api import TransportApi, async_create_api
 from .const import (
     CONF_API_ENDPOINT,
     CONF_API_MAX_RESULTS,
@@ -92,33 +90,13 @@ NAME_SCHEMA = vol.Schema(
 
 
 async def get_stop_id(
-    session: aiohttp.ClientSession,
+    api: TransportApi,
     name: str,
-    api_endpoint: str = DEFAULT_API_ENDPOINT,
     max_results: int = DEFAULT_API_MAX_RESULTS,
 ) -> list[dict[str, Any]]:
-    try:
-        async with asyncio.timeout(30):
-            response = await session.get(
-                url=f"{api_endpoint}/locations",
-                params={
-                    "query": name,
-                    "results": max_results,
-                },
-            )
-            response.raise_for_status()
-            stops = await response.json()
-    except TimeoutError as ex:
-        _LOGGER.warning(f"API timeout: {ex}")
-        return []
-    except aiohttp.ClientError as ex:
-        _LOGGER.warning(f"API error: {ex}")
-        return []
-    except Exception as ex:  # pylint: disable=broad-exception-caught
-        _LOGGER.error(f"Unexpected error: {ex}")
-        return []
+    stops = await api.locations(name, max_results) or []
 
-    _LOGGER.debug(f"OK: stops for {name}: {stops}")
+    _LOGGER.debug(f"Stops for {name}: {stops}")
 
     # convert api data into objects
     return [
@@ -221,9 +199,12 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
             )
 
         api_endpoint, max_results = self._hub_search_args()
-        session = async_get_clientsession(self.hass)
+        # Build a client here instead of taking the hub's runtime_data since a
+        # stop can still be added or reconfigured while the hub is not loaded
+        # (for example when it was explicitly disabled)
+        api = await async_create_api(self.hass, api_endpoint)
         self.data[CONF_FOUND_STOPS] = await get_stop_id(
-            session, user_input[CONF_SEARCH], api_endpoint, max_results
+            api, user_input[CONF_SEARCH], max_results
         )
         return await self.async_step_stop()
 

@@ -1,27 +1,23 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
-import asyncio
 import logging
 from collections.abc import Mapping
 from datetime import datetime, timedelta
 from typing import Any
 
-import aiohttp
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import issue_registry as ir
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity_platform import (
     AddConfigEntryEntitiesCallback,
     AddEntitiesCallback,
 )
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
+from .api import TransportApi, TransportConfigEntry, async_create_api
 from .const import (
-    CONF_API_ENDPOINT,
     CONF_API_MAX_RESULTS,
     CONF_DEPARTURES,
     CONF_DEPARTURES_DIRECTION,
@@ -141,13 +137,16 @@ async def async_setup_platform(
     """Set up the sensor platform."""
     if CONF_DEPARTURES in config:
         async_report_legacy_csv_lists(hass, config[CONF_DEPARTURES])
+        # yaml configuration has no option to set the endpoint,
+        # so we use one api client across all of them with the default endpoint.
+        api = await async_create_api(hass, DEFAULT_API_ENDPOINT)
         for departure in config[CONF_DEPARTURES]:
-            async_add_entities([TransportSensor(hass, departure)], True)
+            async_add_entities([TransportSensor(hass, departure, api)], True)
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    config_entry: TransportConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     # The entry is a hub: shared settings live on it, each stop is a subentry.
@@ -159,7 +158,7 @@ async def async_setup_entry(
         config = {**hub_config, **subentry.data}
         unique_id = subentry.data.get(CONF_UNIQUE_ID) or subentry_id
         async_add_entities(
-            [TransportSensor(hass, config, unique_id)],
+            [TransportSensor(hass, config, config_entry.runtime_data, unique_id)],
             update_before_add=True,
             config_subentry_id=subentry_id,
         )
@@ -172,12 +171,12 @@ class TransportSensor(SensorEntity):
         self,
         hass: HomeAssistant,
         config: Mapping[str, Any],
+        api: TransportApi,
         entry_id: str | None = None,
     ) -> None:
         self.hass: HomeAssistant = hass
         self.config = config
         self._entry_id = entry_id
-        self.api_endpoint: str = config.get(CONF_API_ENDPOINT) or DEFAULT_API_ENDPOINT
         self.api_max_results: int = (
             config.get(CONF_API_MAX_RESULTS) or DEFAULT_API_MAX_RESULTS
         )
@@ -195,7 +194,7 @@ class TransportSensor(SensorEntity):
         self.walking_time: int = config.get(CONF_DEPARTURES_WALKING_TIME) or 1
         # we add +1 minute anyway to delete the "just gone" transport
         self.show_api_line_colors: bool = config.get(CONF_SHOW_API_LINE_COLORS) or False
-        self.session = async_get_clientsession(hass)
+        self.api = api
         self.last_update_success: datetime | None = None
         self._attr_available: bool = True
 
@@ -257,44 +256,29 @@ class TransportSensor(SensorEntity):
     async def fetch_directional_departure(
         self, direction: str | None
     ) -> list[Departure] | None:
-        try:
-            params: dict[str, Any] = {
-                "when": (
-                    datetime.now().astimezone() + timedelta(minutes=self.walking_time)
-                ).isoformat(),
-                "results": self.api_max_results,
-                "suburban": str(self.config.get(CONF_TYPE_SUBURBAN) or False).lower(),
-                "subway": str(self.config.get(CONF_TYPE_SUBWAY) or False).lower(),
-                "tram": str(self.config.get(CONF_TYPE_TRAM) or False).lower(),
-                "bus": str(self.config.get(CONF_TYPE_BUS) or False).lower(),
-                "ferry": str(self.config.get(CONF_TYPE_FERRY) or False).lower(),
-                "express": str(self.config.get(CONF_TYPE_EXPRESS) or False).lower(),
-                "regional": str(self.config.get(CONF_TYPE_REGIONAL) or False).lower(),
-            }
-            if self.duration is not None:
-                params["duration"] = self.duration
-            if direction is not None:
-                params["direction"] = direction
+        params: dict[str, Any] = {
+            "when": (
+                datetime.now().astimezone() + timedelta(minutes=self.walking_time)
+            ).isoformat(),
+            "results": self.api_max_results,
+            "suburban": str(self.config.get(CONF_TYPE_SUBURBAN) or False).lower(),
+            "subway": str(self.config.get(CONF_TYPE_SUBWAY) or False).lower(),
+            "tram": str(self.config.get(CONF_TYPE_TRAM) or False).lower(),
+            "bus": str(self.config.get(CONF_TYPE_BUS) or False).lower(),
+            "ferry": str(self.config.get(CONF_TYPE_FERRY) or False).lower(),
+            "express": str(self.config.get(CONF_TYPE_EXPRESS) or False).lower(),
+            "regional": str(self.config.get(CONF_TYPE_REGIONAL) or False).lower(),
+        }
+        if self.duration is not None:
+            params["duration"] = self.duration
+        if direction is not None:
+            params["direction"] = direction
 
-            async with asyncio.timeout(30):
-                response = await self.session.get(
-                    url=f"{self.api_endpoint}/stops/{self.stop_id}/departures",
-                    params=params,
-                )
-                response.raise_for_status()
-                departures = await response.json()
-
-        except TimeoutError as ex:
-            _LOGGER.warning(f"API timeout: {ex}")
-            return None
-        except aiohttp.ClientError as ex:
-            _LOGGER.warning(f"API error: {ex}")
-            return None
-        except Exception as ex:  # pylint: disable=broad-exception-caught
-            _LOGGER.error(f"Unexpected error: {ex}")
+        departures = await self.api.departures(self.stop_id, params)
+        if departures is None:
             return None
 
-        if not departures or "departures" not in departures:
+        if "departures" not in departures:
             _LOGGER.warning(f"No departures found for {self.stop_id}")
             return []
 
