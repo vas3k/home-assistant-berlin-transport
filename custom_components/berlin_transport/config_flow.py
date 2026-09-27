@@ -187,19 +187,23 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
             entry.options.get(CONF_API_MAX_RESULTS) or DEFAULT_API_MAX_RESULTS,
         )
 
+    async def _async_search_stops(self, query: str) -> list[dict[str, Any]]:
+        """Search stops by name using the hub's API endpoint."""
+        api_endpoint, max_results = self._hub_search_args()
+        # Build a client here instead of taking the hub's runtime_data since a
+        # stop can still be added or reconfigured while the hub is not loaded
+        # (for example when it was explicitly disabled)
+        api = await async_create_api(self.hass, api_endpoint)
+        return await get_stop_id(api, query, max_results)
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.SubentryFlowResult:
         """Search for a stop using the hub's API endpoint."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            api_endpoint, max_results = self._hub_search_args()
-            # Build a client here instead of taking the hub's runtime_data since
-            # a stop can still be added or reconfigured while the hub is not
-            # loaded (for example when it was explicitly disabled)
-            api = await async_create_api(self.hass, api_endpoint)
-            self.data[CONF_FOUND_STOPS] = await get_stop_id(
-                api, user_input[CONF_SEARCH], max_results
+            self.data[CONF_FOUND_STOPS] = await self._async_search_stops(
+                user_input[CONF_SEARCH]
             )
             if self.data[CONF_FOUND_STOPS]:
                 return await self.async_step_stop()
