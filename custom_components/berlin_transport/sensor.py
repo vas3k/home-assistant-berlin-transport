@@ -165,6 +165,10 @@ async def async_setup_entry(
 
 
 class TransportSensor(SensorEntity):
+    # The departures change on every update and would bloat the recorder
+    # database. The state already shows the next departure.
+    _unrecorded_attributes = frozenset({"departures"})
+
     departures: list[Departure] = []
 
     def __init__(
