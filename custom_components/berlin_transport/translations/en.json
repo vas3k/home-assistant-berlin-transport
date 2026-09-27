@@ -54,16 +54,33 @@
             "selected_stops": "Found stops"
           }
         },
+        "excluded_stops": {
+          "title": "Ignored Nearby Stops",
+          "description": "The API also reports departures from stops near the one you picked. Drop the departures of these stops. Leave empty to keep all.",
+          "data": {
+            "excluded_stops": "Ignored stops",
+            "search": "Search for a stop to add"
+          },
+          "data_description": {
+            "excluded_stops": "Remove a stop to show its departures again. You can also type a stop ID.",
+            "search": "Enter a stop name and submit to pick from the results. Submit without a search to continue."
+          }
+        },
+        "excluded_stops_results": {
+          "title": "Add Ignored Stops",
+          "description": "Tick the stops whose departures to drop.",
+          "data": {
+            "selected_stops": "Found stops"
+          }
+        },
         "details": {
           "title": "More Details",
           "description": "Additional settings",
           "data_description": {
-            "excluded_stops": "Drop departures that the API reports for these nearby stops. Enter a single stop id each.",
             "excluded_lines": "Drop these lines from the results, e.g. S41."
           },
           "data": {
             "walking_time": "Walking time to stop (minutes)",
-            "excluded_stops": "Ignored nearby stop",
             "excluded_lines": "Ignored line",
             "show_official_line_colors": "Use official VBB line colors",
             "duration": "Departure time range (minutes)",

@@ -43,7 +43,7 @@ CONF_SELECTED_STOPS = "selected_stops"
 
 # Stop list options that get a page of their own, where stops are searched by
 # name instead of typed in by id.
-STOP_LIST_OPTIONS = (CONF_DEPARTURES_DIRECTION,)
+STOP_LIST_OPTIONS = (CONF_DEPARTURES_DIRECTION, CONF_DEPARTURES_EXCLUDED_STOPS)
 
 # The hub holds the API endpoint and the settings shared by all its stops.
 HUB_SCHEMA = vol.Schema(
@@ -70,10 +70,6 @@ def string_list_selector() -> selector.TextSelector:
 
 DATA_SCHEMA = vol.Schema(
     {
-        vol.Optional(
-            CONF_DEPARTURES_EXCLUDED_STOPS,
-            default=list,
-        ): string_list_selector(),
         vol.Optional(
             CONF_DEPARTURES_EXCLUDED_LINES,
             default=list,
@@ -365,7 +361,7 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
             CONF_DEPARTURES_DIRECTION,
             user_input,
             self.async_step_direction_results,
-            self.async_step_details,
+            self.async_step_excluded_stops,
         )
 
     async def async_step_direction_results(
@@ -374,6 +370,25 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
         """Pick the found stops to add to the direction filter."""
         return await self._async_step_found_stops(
             CONF_DEPARTURES_DIRECTION, user_input, self.async_step_direction
+        )
+
+    async def async_step_excluded_stops(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.SubentryFlowResult:
+        """Choose the nearby stops whose departures to drop."""
+        return await self._async_step_stop_list(
+            CONF_DEPARTURES_EXCLUDED_STOPS,
+            user_input,
+            self.async_step_excluded_stops_results,
+            self.async_step_details,
+        )
+
+    async def async_step_excluded_stops_results(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.SubentryFlowResult:
+        """Pick the found stops to add to the ignored stops."""
+        return await self._async_step_found_stops(
+            CONF_DEPARTURES_EXCLUDED_STOPS, user_input, self.async_step_excluded_stops
         )
 
     def _stop_list_data(self) -> dict[str, Any]:
