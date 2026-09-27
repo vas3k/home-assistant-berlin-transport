@@ -62,6 +62,12 @@ class TransportApi:
         )
         return result
 
+    async def stop(
+        self, stop_id: str, params: Mapping[str, Any]
+    ) -> dict[str, Any] | None:
+        result: dict[str, Any] | None = await self._get(f"/stops/{stop_id}", params)
+        return result
+
     async def departures(
         self, stop_id: int, params: Mapping[str, Any]
     ) -> dict[str, Any] | None:

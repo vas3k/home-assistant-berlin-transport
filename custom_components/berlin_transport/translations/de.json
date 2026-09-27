@@ -35,43 +35,53 @@
             "selected_stop": "Haltestelle (Name und ID)"
           }
         },
+        "direction": {
+          "title": "Richtungsfilter",
+          "description": "Nur Abfahrten anzeigen, die an einer dieser Haltestellen halten oder dort enden. Leer lassen, um alle Richtungen anzuzeigen.",
+          "data": {
+            "direction": "Haltestellen in Fahrtrichtung",
+            "search": "Haltestelle zum Hinzufügen suchen"
+          },
+          "data_description": {
+            "direction": "Entferne eine Haltestelle, um sie aus dem Filter zu nehmen. Du kannst auch eine Haltestellen-ID eingeben, nach dem Absenden wird sie mit ihrem Namen angezeigt.",
+            "search": "Namen einer Haltestelle eingeben und absenden, um aus den Ergebnissen zu wählen. Ohne Suche absenden, um fortzufahren."
+          }
+        },
+        "direction_results": {
+          "title": "Haltestellen zum Richtungsfilter hinzufügen",
+          "description": "Wähle die Haltestellen aus, die zum Richtungsfilter hinzugefügt werden sollen.",
+          "data": {
+            "selected_stops": "Gefundene Haltestellen"
+          }
+        },
+        "excluded_stops": {
+          "title": "Ignorierte Haltestellen in der Nähe",
+          "description": "Die API liefert auch Abfahrten von Haltestellen in der Nähe der gewählten. Abfahrten dieser Haltestellen ausblenden. Leer lassen, um alle anzuzeigen.",
+          "data": {
+            "excluded_stops": "Ignorierte Haltestellen",
+            "search": "Haltestelle zum Hinzufügen suchen"
+          },
+          "data_description": {
+            "excluded_stops": "Entferne eine Haltestelle, um ihre Abfahrten wieder anzuzeigen. Du kannst auch eine Haltestellen-ID eingeben, nach dem Absenden wird sie mit ihrem Namen angezeigt.",
+            "search": "Namen einer Haltestelle eingeben und absenden, um aus den Ergebnissen zu wählen. Ohne Suche absenden, um fortzufahren."
+          }
+        },
+        "excluded_stops_results": {
+          "title": "Ignorierte Haltestellen hinzufügen",
+          "description": "Wähle die Haltestellen aus, deren Abfahrten ausgeblendet werden sollen.",
+          "data": {
+            "selected_stops": "Gefundene Haltestellen"
+          }
+        },
         "details": {
           "title": "Weitere Details",
           "description": "Zusätzliche Einstellungen",
           "data_description": {
-            "direction": "Nur Abfahrten anzeigen, die an diesen Haltestellen halten oder dort enden. Leer lassen für keinen Filter. Eine Haltestellen-ID pro Eintrag.",
-            "excluded_stops": "Abfahrten für diese nahegelegenen Haltestellen ausblenden. Eine Haltestellen-ID pro Eintrag.",
-            "excluded_lines": "Diese Linien aus den Ergebnissen entfernen, z. B. S41."
+            "excluded_lines": "Linien dieser Haltestelle auswählen oder einen Liniennamen eingeben, z. B. S41."
           },
           "data": {
             "walking_time": "Gehminuten zur Haltestelle",
-            "direction": "Zwischenstopp Filter",
-            "excluded_stops": "Ignorierte Haltestellen",
-            "excluded_lines": "Ignorierte Linie",
-            "show_official_line_colors": "Offizielle VBB-Farben verwenden",
-            "duration": "Zeitraum für Abfahrten (Minuten)",
-            "suburban": "S-Bahn anzeigen",
-            "subway": "U-Bahn anzeigen",
-            "tram": "Tram anzeigen",
-            "bus": "Bus anzeigen",
-            "ferry": "Fähren anzeigen",
-            "express": "IC/ICE anzeigen",
-            "regional": "RB/RE anzeigen"
-          }
-        },
-        "reconfigure": {
-          "title": "Neu konfigurieren",
-          "description": "Sensoreinstellungen bearbeiten",
-          "data_description": {
-            "direction": "Nur Abfahrten anzeigen, die an diesen Haltestellen halten oder dort enden. Leer lassen für keinen Filter. Eine Haltestellen-ID pro Eintrag.",
-            "excluded_stops": "Abfahrten für diese nahegelegenen Haltestellen entfernen. Eine Haltestellen-ID pro Eintrag.",
-            "excluded_lines": "Diese Linien aus den Ergebnissen entfernen, z. B. S41."
-          },
-          "data": {
-            "walking_time": "Gehminuten zur Haltestelle",
-            "direction": "Zwischenstopp Filter",
-            "excluded_stops": "Ignorierte Haltestellen",
-            "excluded_lines": "Ignorierte Linie",
+            "excluded_lines": "Ignorierte Linien",
             "show_official_line_colors": "Offizielle VBB-Farben verwenden",
             "duration": "Zeitraum für Abfahrten (Minuten)",
             "suburban": "S-Bahn anzeigen",
@@ -83,6 +93,12 @@
             "regional": "RB/RE anzeigen"
           }
         }
+      },
+      "error": {
+        "no_stops_found": "Keine Haltestellen gefunden. Prüfe die Schreibweise oder versuche es später erneut, falls die API nicht erreichbar ist."
+      },
+      "abort": {
+        "reconfigure_successful": "Die Haltestelle wurde aktualisiert. Die neuen Einstellungen gelten ab sofort."
       }
     }
   },

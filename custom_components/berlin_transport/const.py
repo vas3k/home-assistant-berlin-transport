@@ -40,6 +40,8 @@ CONF_LIST_OPTIONS = (
     CONF_DEPARTURES_EXCLUDED_LINES,
 )
 
+CONF_STOP_NAMES = "stop_names"
+
 # Repair issue raised while a YAML config still uses the comma-separated form.
 ISSUE_YAML_CSV_LISTS = "yaml_comma_separated_lists"
 YAML_DOCS_URL = (

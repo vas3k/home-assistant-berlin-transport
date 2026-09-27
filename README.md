@@ -48,7 +48,9 @@ On the integration's page, click `Add stop`. Then:
 
 1. Search for your stop by name. Partial matches work — up to "maximum results" stops will be listed.
 2. Select the stop you want to monitor from the dropdown.
-3. Optionally configure the per-stop settings below.
+3. Optionally filter departures by direction: search for stops along your route by name and tick the ones you want. Search again to add more, then submit without a search to continue.
+4. Optionally ignore nearby stops the same way, if the API returns departures from stops you don't want.
+5. Optionally configure the per-stop settings below.
 
 Repeat for every stop you want. All stops under one hub share the same API endpoint and request settings.
 
@@ -56,18 +58,18 @@ Repeat for every stop you want. All stops under one hub share the same API endpo
 
 | Setting                               | Default | Description |
 | ------------------------------------- | ------- | ----------- |
-| Walking time in minutes               | `1`     | Time needed to walk to the stop. Departures you could not reach in time are hidden. |
-| Filter departures by direction        | not set | `stop_id`s along the intended lines, or their final destinations. Add one value per entry. See [How do I find my stop_id?](#how-do-i-find-my-stop_id). |
-| Exclude nearby stops with IDs         | not set | `stop_id`s to drop from the results. Add one value per entry. Use this when the API returns departures from nearby stops. |
-| Exclude lines by name                 | not set | Line names to drop from the results, e.g. `S41`. Add one value per entry. |
-| Show departures for how many minutes? | not set | How far into the future to fetch departures. Leave empty to use the API's own default window. |
-| Enable official VBB line colors       | off     | Use the colors reported by the API instead of the predefined ones. |
+| Walking time to stop (minutes)        | `1`     | Time needed to walk to the stop. Departures you could not reach in time are hidden. |
+| Filter departures by direction        | not set | Stops along the intended lines, or their final destinations. Chosen on a page of their own: search by name, or type a `stop_id`. |
+| Exclude nearby stops                  | not set | Stops whose departures to drop from the results. Use this when the API returns departures from nearby stops. Chosen on a page of their own: search by name, or type a `stop_id`. |
+| Exclude lines by name                 | not set | Lines to drop from the results. Pick from the lines serving the stop, or type a line name, e.g. `S41`. |
+| Departure time range (minutes)        | not set | How far into the future to fetch departures. Leave empty to use the API's own default window. |
+| Use official VBB line colors          | off     | Use the colors reported by the API instead of the predefined ones. |
 | Transport types                       | all on  | Which products to include: S-Bahn, U-Bahn, Tram, Bus, Ferry, IC/ICE, RB/RE. |
 
 ### 3. Change settings later
 
 - **Hub settings** (API endpoint, maximum results, fallback time): open the hub's `⋮` menu and choose `Configure`.
-- **Stop settings**: open the stop's `⋮` menu and choose `Reconfigure`. The stop itself cannot be changed — to monitor a different stop, add a new one and delete the old.
+- **Stop settings**: open the stop's `⋮` menu and choose `Reconfigure`. This goes through the direction filter and ignored stops pages first, then the other settings. The stop itself cannot be changed — to monitor a different stop, add a new one and delete the old.
 
 Both take effect immediately; the integration reloads itself.
 
@@ -81,7 +83,7 @@ A home assistant addon for the server is also available at https://github.com/Co
 
 Older versions created **one config entry per stop**. On first start after the update, all of those entries are migrated automatically into a **single hub**, with each old entry becoming a stop underneath it. Your entities keep their IDs, so history and dashboards are unaffected.
 
-The direction and exclusion filters used to be stored as a single comma-separated string. They are now lists, and existing stops are converted automatically on the same first start. Only [YAML configurations](#-yaml-configuration-legacy) have to be updated by hand.
+The direction and exclusion filters used to be stored as a single comma-separated string. They are now lists, and existing stops are converted automatically on the same first start. Only [YAML configurations](#-yaml-configuration-legacy) have to be updated by hand. The stop IDs in these filters are shown with their stop names the next time you reconfigure the stop.
 
 Downgrading to a pre-hub version is not supported; the config entries cannot be converted back.
 
@@ -122,7 +124,7 @@ To install manually, copy the whole [berlin_transport](./custom_components/) dir
 
 ### How do I find my `stop_id`?
 
-The UI flow searches for stops for you, so you only need this for YAML, or for the direction and exclusion filters.
+The UI flow searches for stops for you, so you only need this for YAML.
 
 Use this URL: **https://v6.vbb.transport.rest/locations?results=1&query=alexanderplatz**
 
