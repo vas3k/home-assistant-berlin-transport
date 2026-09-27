@@ -293,8 +293,8 @@ class TransportSensor(SensorEntity):
         return [
             Departure.from_dict(departure)
             for departure in (departures.get("departures") or [])
-            if departure.get("stop", {}).get("id") not in self.excluded_stops
-            and departure.get("line", {}).get("name") not in self.excluded_lines
+            if (departure.get("stop") or {}).get("id") not in self.excluded_stops
+            and (departure.get("line") or {}).get("name") not in self.excluded_lines
         ]
 
     async def fetch_departures(self) -> list[Departure] | None:
