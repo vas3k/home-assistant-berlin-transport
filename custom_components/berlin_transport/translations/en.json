@@ -43,7 +43,7 @@
             "search": "Search for a stop to add"
           },
           "data_description": {
-            "direction": "Remove a stop to drop it from the filter. You can also type a stop ID.",
+            "direction": "Remove a stop to drop it from the filter. You can also type a stop ID, it is shown with its name once you submit.",
             "search": "Enter a stop name and submit to pick from the results. Submit without a search to continue."
           }
         },
@@ -62,7 +62,7 @@
             "search": "Search for a stop to add"
           },
           "data_description": {
-            "excluded_stops": "Remove a stop to show its departures again. You can also type a stop ID.",
+            "excluded_stops": "Remove a stop to show its departures again. You can also type a stop ID, it is shown with its name once you submit.",
             "search": "Enter a stop name and submit to pick from the results. Submit without a search to continue."
           }
         },

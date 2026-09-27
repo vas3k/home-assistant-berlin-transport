@@ -1,5 +1,6 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
+import asyncio
 import copy
 import logging
 from collections.abc import Awaitable, Callable, Mapping
@@ -103,6 +104,13 @@ async def get_stop_id(
         for stop in stops
         if stop["type"] == "stop"
     ]
+
+
+async def get_stop_name(api: TransportApi, stop_id: str) -> str | None:
+    """The name of a stop, or None if the API does not know it or fails."""
+    stop = await api.stop(stop_id, {})
+    name: str | None = stop.get("name") if stop else None
+    return name
 
 
 def stop_label(stop: Mapping[str, Any]) -> str:
@@ -231,6 +239,8 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
     def __init__(self) -> None:
         self.data: dict[str, Any] = {key: [] for key in STOP_LIST_OPTIONS}
         self.data[CONF_STOP_NAMES] = {}
+        # Stop ids whose name was already looked up in this flow
+        self._name_lookups: set[str] = set()
 
     def _hub_search_args(self) -> tuple[str, int]:
         """Endpoint and max results inherited from the parent hub entry."""
@@ -240,14 +250,47 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
             entry.options.get(CONF_API_MAX_RESULTS) or DEFAULT_API_MAX_RESULTS,
         )
 
-    async def _async_search_stops(self, query: str) -> list[dict[str, Any]]:
-        """Search stops by name using the hub's API endpoint."""
-        api_endpoint, max_results = self._hub_search_args()
+    async def _async_api(self) -> TransportApi:
+        """A client for the hub's API endpoint."""
+        api_endpoint, _ = self._hub_search_args()
         # Build a client here instead of taking the hub's runtime_data since a
         # stop can still be added or reconfigured while the hub is not loaded
         # (for example when it was explicitly disabled)
-        api = await async_create_api(self.hass, api_endpoint)
-        return await get_stop_id(api, query, max_results)
+        return await async_create_api(self.hass, api_endpoint)
+
+    async def _async_search_stops(self, query: str) -> list[dict[str, Any]]:
+        """Search stops by name using the hub's API endpoint."""
+        _, max_results = self._hub_search_args()
+        return await get_stop_id(await self._async_api(), query, max_results)
+
+    async def _async_resolve_stop_names(self, stop_ids: list[str]) -> None:
+        """Look up the names of the stops that have none yet.
+
+        Each stop is only looked up once per flow, so an unreachable API or an
+        unknown stop id does not hold up every page it is shown on. Stops whose
+        name is not found keep showing as the bare id.
+        """
+        names = self.data[CONF_STOP_NAMES]
+        missing = [
+            stop_id
+            for stop_id in dict.fromkeys(stop_ids)
+            if stop_id not in names and stop_id not in self._name_lookups
+        ]
+        if not missing:
+            return
+
+        self._name_lookups.update(missing)
+        api = await self._async_api()
+        found = await asyncio.gather(
+            *(get_stop_name(api, stop_id) for stop_id in missing)
+        )
+        names.update(
+            {
+                stop_id: name
+                for stop_id, name in zip(missing, found, strict=True)
+                if name
+            }
+        )
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -302,22 +345,25 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
         """Show the stops chosen for `key`, with a search to add more.
 
         Submitting a search goes to `results_step`, which comes back here.
-        Submitting without one moves on to `next_step`.
+        Submitting newly typed stop ids comes back here too, to show them with
+        their names. Submitting without adding anything moves on to `next_step`.
         """
         errors: dict[str, str] = {}
         suggested_values: dict[str, Any] = {}
         if user_input is not None:
+            typed = [i for i in user_input[key] if i not in self.data[key]]
             self.data[key] = user_input[key]
             query = user_input.get(CONF_SEARCH, "").strip()
-            if not query:
+            if query:
+                self.data[CONF_FOUND_STOPS] = await self._async_search_stops(query)
+                if self.data[CONF_FOUND_STOPS]:
+                    return await results_step()
+                errors[CONF_SEARCH] = "no_stops_found"
+                suggested_values[CONF_SEARCH] = query
+            elif not typed:
                 return await next_step()
 
-            self.data[CONF_FOUND_STOPS] = await self._async_search_stops(query)
-            if self.data[CONF_FOUND_STOPS]:
-                return await results_step()
-            errors[CONF_SEARCH] = "no_stops_found"
-            suggested_values[CONF_SEARCH] = query
-
+        await self._async_resolve_stop_names(self.data[key])
         return self.async_show_form(
             step_id=key,
             data_schema=self.add_suggested_values_to_schema(

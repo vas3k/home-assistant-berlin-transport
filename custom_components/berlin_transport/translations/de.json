@@ -43,7 +43,7 @@
             "search": "Haltestelle zum Hinzufügen suchen"
           },
           "data_description": {
-            "direction": "Entferne eine Haltestelle, um sie aus dem Filter zu nehmen. Du kannst auch eine Haltestellen-ID eingeben.",
+            "direction": "Entferne eine Haltestelle, um sie aus dem Filter zu nehmen. Du kannst auch eine Haltestellen-ID eingeben, nach dem Absenden wird sie mit ihrem Namen angezeigt.",
             "search": "Namen einer Haltestelle eingeben und absenden, um aus den Ergebnissen zu wählen. Ohne Suche absenden, um fortzufahren."
           }
         },
@@ -62,7 +62,7 @@
             "search": "Haltestelle zum Hinzufügen suchen"
           },
           "data_description": {
-            "excluded_stops": "Entferne eine Haltestelle, um ihre Abfahrten wieder anzuzeigen. Du kannst auch eine Haltestellen-ID eingeben.",
+            "excluded_stops": "Entferne eine Haltestelle, um ihre Abfahrten wieder anzuzeigen. Du kannst auch eine Haltestellen-ID eingeben, nach dem Absenden wird sie mit ihrem Namen angezeigt.",
             "search": "Namen einer Haltestelle eingeben und absenden, um aus den Ergebnissen zu wählen. Ohne Suche absenden, um fortzufahren."
           }
         },

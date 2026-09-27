@@ -83,7 +83,7 @@ A home assistant addon for the server is also available at https://github.com/Co
 
 Older versions created **one config entry per stop**. On first start after the update, all of those entries are migrated automatically into a **single hub**, with each old entry becoming a stop underneath it. Your entities keep their IDs, so history and dashboards are unaffected.
 
-The direction and exclusion filters used to be stored as a single comma-separated string. They are now lists, and existing stops are converted automatically on the same first start. Only [YAML configurations](#-yaml-configuration-legacy) have to be updated by hand.
+The direction and exclusion filters used to be stored as a single comma-separated string. They are now lists, and existing stops are converted automatically on the same first start. Only [YAML configurations](#-yaml-configuration-legacy) have to be updated by hand. The stop IDs in these filters are shown with their stop names the next time you reconfigure the stop.
 
 Downgrading to a pre-hub version is not supported; the config entries cannot be converted back.
 
