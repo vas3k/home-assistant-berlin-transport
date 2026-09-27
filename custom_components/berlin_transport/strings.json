@@ -35,41 +35,34 @@
             "selected_stop": "ID of the Stop"
           }
         },
+        "direction": {
+          "title": "Direction Filter",
+          "description": "Only show departures that pass or end at any of these stops. Leave empty to show all directions.",
+          "data": {
+            "direction": "Direction stops",
+            "search": "Search for a stop to add"
+          },
+          "data_description": {
+            "direction": "Remove a stop to drop it from the filter. You can also type a stop ID.",
+            "search": "Enter a stop name and submit to pick from the results. Submit without a search to continue."
+          }
+        },
+        "direction_results": {
+          "title": "Add Direction Stops",
+          "description": "Tick the stops to add to the direction filter.",
+          "data": {
+            "selected_stops": "Found stops"
+          }
+        },
         "details": {
           "title": "Further Details",
           "description": "Add further details",
           "data_description": {
-            "direction": "Only show departures that pass or end at any of these stops. Leave empty for all directions. Enter a single stop id each.",
             "excluded_stops": "Drop departures for these nearby stops. Enter a single stop id each.",
             "excluded_lines": "Drop these lines from the results, e.g. S41."
           },
           "data": {
             "walking_time": "Walking time in minutes",
-            "direction": "Direction filter",
-            "excluded_stops": "Ignored nearby stop",
-            "excluded_lines": "Ignored line",
-            "show_official_line_colors": "Enable official VBB line colors",
-            "duration": "Show departures for how many minutes?",
-            "suburban": "Include S-Bahn",
-            "subway": "Include U-Bahn",
-            "tram": "Include Tram",
-            "bus": "Include Bus",
-            "ferry": "Include Ferry",
-            "express": "Include IC/ICE",
-            "regional": "Include RB/RE"
-          }
-        },
-        "reconfigure": {
-          "title": "Reconfigure",
-          "description": "Update sensor settings",
-          "data_description": {
-            "direction": "Only show departures that pass or end at any of these stops. Leave empty for all directions. Enter a single stop id each.",
-            "excluded_stops": "Drop departures for these nearby stops. Enter a single stop id each.",
-            "excluded_lines": "Drop these lines from the results, e.g. S41."
-          },
-          "data": {
-            "walking_time": "Walking time in minutes",
-            "direction": "Direction filter",
             "excluded_stops": "Ignored nearby stop",
             "excluded_lines": "Ignored line",
             "show_official_line_colors": "Enable official VBB line colors",

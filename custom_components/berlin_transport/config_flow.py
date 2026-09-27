@@ -1,7 +1,8 @@
 """The Berlin (BVG) and Brandenburg (VBB) transport integration."""
 
+import copy
 import logging
-from collections.abc import Mapping
+from collections.abc import Awaitable, Callable, Mapping
 from typing import Any, Self
 
 import homeassistant.helpers.config_validation as cv
@@ -24,6 +25,7 @@ from .const import (
     CONF_FALLBACK_TIME,
     CONF_SELECTED_STOP,
     CONF_SHOW_API_LINE_COLORS,
+    CONF_STOP_NAMES,
     CONFIG_ENTRY_VERSION,
     DEFAULT_API_ENDPOINT,
     DEFAULT_API_MAX_RESULTS,
@@ -37,6 +39,11 @@ _LOGGER = logging.getLogger(__name__)
 
 CONF_SEARCH = "search"
 CONF_FOUND_STOPS = "found_stops"
+CONF_SELECTED_STOPS = "selected_stops"
+
+# Stop list options that get a page of their own, where stops are searched by
+# name instead of typed in by id.
+STOP_LIST_OPTIONS = (CONF_DEPARTURES_DIRECTION,)
 
 # The hub holds the API endpoint and the settings shared by all its stops.
 HUB_SCHEMA = vol.Schema(
@@ -63,10 +70,6 @@ def string_list_selector() -> selector.TextSelector:
 
 DATA_SCHEMA = vol.Schema(
     {
-        vol.Optional(
-            CONF_DEPARTURES_DIRECTION,
-            default=list,
-        ): string_list_selector(),
         vol.Optional(
             CONF_DEPARTURES_EXCLUDED_STOPS,
             default=list,
@@ -127,6 +130,59 @@ def list_stops(stops: list[dict[str, Any]]) -> vol.Schema:
     return schema
 
 
+def stop_option(stop_id: str, names: Mapping[str, str]) -> selector.SelectOptionDict:
+    """A stop id as a select option, labelled with its name when known."""
+    label = stop_id
+    if stop_id in names:
+        label = stop_label(
+            {CONF_DEPARTURES_NAME: names[stop_id], CONF_DEPARTURES_STOP_ID: stop_id}
+        )
+    return selector.SelectOptionDict(value=stop_id, label=label)
+
+
+def stop_list_schema(
+    key: str, stop_ids: list[str], names: Mapping[str, str]
+) -> vol.Schema:
+    """The stops chosen for a stop list option.
+
+    The chosen stops show as chips that can be removed. A stop id can also be
+    typed in directly, e.g. when the search does not find it.
+    """
+    return vol.Schema(
+        {
+            vol.Optional(key, default=list): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[stop_option(stop_id, names) for stop_id in stop_ids],
+                    multiple=True,
+                    custom_value=True,
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            ),
+            vol.Optional(CONF_SEARCH): selector.TextSelector(),
+        }
+    )
+
+
+def found_stops_schema(stops: list[dict[str, Any]]) -> vol.Schema:
+    """Tick boxes for the stops found by a search."""
+    return vol.Schema(
+        {
+            vol.Optional(CONF_SELECTED_STOPS, default=list): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        selector.SelectOptionDict(
+                            value=stop[CONF_DEPARTURES_STOP_ID], label=stop_label(stop)
+                        )
+                        for stop in stops
+                    ],
+                    multiple=True,
+                    mode=selector.SelectSelectorMode.LIST,
+                )
+            )
+        }
+    )
+
+
 class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Create a hub entry that holds the API endpoint and shared settings."""
 
@@ -177,7 +233,8 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
     """Add or reconfigure a single stop under a hub entry."""
 
     def __init__(self) -> None:
-        self.data: dict[str, Any] = {}
+        self.data: dict[str, Any] = {key: [] for key in STOP_LIST_OPTIONS}
+        self.data[CONF_STOP_NAMES] = {}
 
     def _hub_search_args(self) -> tuple[str, int]:
         """Endpoint and max results inherited from the parent hub entry."""
@@ -237,20 +294,125 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
         ) = selected_stop
         _LOGGER.debug(f"OK: selected stop {selected_stop[0]} [{selected_stop[1]}]")
 
-        return await self.async_step_details()
+        return await self.async_step_direction()
+
+    async def _async_step_stop_list(
+        self,
+        key: str,
+        user_input: dict[str, Any] | None,
+        results_step: Callable[[], Awaitable[config_entries.SubentryFlowResult]],
+        next_step: Callable[[], Awaitable[config_entries.SubentryFlowResult]],
+    ) -> config_entries.SubentryFlowResult:
+        """Show the stops chosen for `key`, with a search to add more.
+
+        Submitting a search goes to `results_step`, which comes back here.
+        Submitting without one moves on to `next_step`.
+        """
+        errors: dict[str, str] = {}
+        suggested_values: dict[str, Any] = {}
+        if user_input is not None:
+            self.data[key] = user_input[key]
+            query = user_input.get(CONF_SEARCH, "").strip()
+            if not query:
+                return await next_step()
+
+            self.data[CONF_FOUND_STOPS] = await self._async_search_stops(query)
+            if self.data[CONF_FOUND_STOPS]:
+                return await results_step()
+            errors[CONF_SEARCH] = "no_stops_found"
+            suggested_values[CONF_SEARCH] = query
+
+        return self.async_show_form(
+            step_id=key,
+            data_schema=self.add_suggested_values_to_schema(
+                stop_list_schema(key, self.data[key], self.data[CONF_STOP_NAMES]),
+                {key: self.data[key], **suggested_values},
+            ),
+            errors=errors,
+        )
+
+    async def _async_step_found_stops(
+        self,
+        key: str,
+        user_input: dict[str, Any] | None,
+        list_step: Callable[[], Awaitable[config_entries.SubentryFlowResult]],
+    ) -> config_entries.SubentryFlowResult:
+        """Pick which of the found stops to add to `key`, then go back to it."""
+        found = self.data[CONF_FOUND_STOPS]
+        if user_input is None:
+            return self.async_show_form(
+                step_id=f"{key}_results",
+                data_schema=found_stops_schema(found),
+            )
+
+        selected = user_input[CONF_SELECTED_STOPS]
+        chosen = self.data[key]
+        self.data[key] = [*chosen, *(i for i in selected if i not in chosen)]
+        self.data[CONF_STOP_NAMES].update(
+            {
+                stop[CONF_DEPARTURES_STOP_ID]: stop[CONF_DEPARTURES_NAME]
+                for stop in found
+                if stop[CONF_DEPARTURES_STOP_ID] in selected
+            }
+        )
+        return await list_step()
+
+    async def async_step_direction(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.SubentryFlowResult:
+        """Choose the stops that departures have to pass or end at."""
+        return await self._async_step_stop_list(
+            CONF_DEPARTURES_DIRECTION,
+            user_input,
+            self.async_step_direction_results,
+            self.async_step_details,
+        )
+
+    async def async_step_direction_results(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.SubentryFlowResult:
+        """Pick the found stops to add to the direction filter."""
+        return await self._async_step_found_stops(
+            CONF_DEPARTURES_DIRECTION, user_input, self.async_step_direction
+        )
+
+    def _stop_list_data(self) -> dict[str, Any]:
+        """The chosen stop lists, with the names of just the stops in them."""
+        lists = {key: self.data[key] for key in STOP_LIST_OPTIONS}
+        chosen = {stop_id for stop_ids in lists.values() for stop_id in stop_ids}
+        names = {
+            stop_id: name
+            for stop_id, name in self.data[CONF_STOP_NAMES].items()
+            if stop_id in chosen
+        }
+        return {**lists, CONF_STOP_NAMES: names}
 
     async def async_step_details(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.SubentryFlowResult:
-        """Collect the per-stop details and create the subentry."""
+        """Collect the remaining per-stop settings and save the stop."""
+        reconfiguring = self.source == config_entries.SOURCE_RECONFIGURE
         if user_input is None:
+            schema = DATA_SCHEMA
+            if reconfiguring:
+                schema = self.add_suggested_values_to_schema(
+                    schema, dict(self._get_reconfigure_subentry().data)
+                )
             return self.async_show_form(
                 step_id="details",
-                data_schema=DATA_SCHEMA,
+                data_schema=schema,
                 errors={},
             )
 
-        data = user_input
+        data = {**user_input, **self._stop_list_data()}
+        if reconfiguring:
+            subentry = self._get_reconfigure_subentry()
+            return self.async_update_and_abort(
+                self._get_entry(),
+                subentry,
+                data={**subentry.data, **data},
+            )
+
         data[CONF_DEPARTURES_STOP_ID] = self.data[CONF_DEPARTURES_STOP_ID]
         data[CONF_DEPARTURES_NAME] = self.data[CONF_DEPARTURES_NAME]
         return self.async_create_entry(
@@ -259,25 +421,21 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
         )
 
     async def async_step_reconfigure(
-        self, user_input: dict[str, Any] | None = None
+        self,
+        user_input: dict[str, Any] | None = None,  # pylint: disable=unused-argument
     ) -> config_entries.SubentryFlowResult:
-        """Reconfigure an existing stop's details (the stop itself is fixed)."""
+        """Reconfigure an existing stop (the stop itself is fixed).
+
+        Goes through the same pages as adding a stop does after picking it.
+        """
         subentry = self._get_reconfigure_subentry()
-
-        if user_input is not None:
-            data = {**subentry.data, **user_input}
-            return self.async_update_and_abort(
-                self._get_entry(),
-                subentry,
-                data=data,
-            )
-
-        return self.async_show_form(
-            step_id="reconfigure",
-            data_schema=self.add_suggested_values_to_schema(
-                DATA_SCHEMA, dict(subentry.data)
-            ),
-        )
+        # Work on a copy: the stored data is only read-only at the top level
+        # (it's a MappingProxyType), so editing its lists or names in place
+        # would edit the stored stop (and the running sensor's filters) without
+        # saving. Updating keeps the defaults for keys the stop was saved
+        # without, like the names of older stops.
+        self.data.update(copy.deepcopy(dict(subentry.data)))
+        return await self.async_step_direction()
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
