@@ -98,8 +98,11 @@ async def get_stop_id(
     api: TransportApi,
     name: str,
     max_results: int = DEFAULT_API_MAX_RESULTS,
-) -> list[dict[str, Any]]:
-    stops = await api.locations(name, max_results) or []
+) -> list[dict[str, Any]] | None:
+    """The stops matching `name`, or None if the API fails."""
+    stops = await api.locations(name, max_results)
+    if stops is None:
+        return None
 
     _LOGGER.debug(f"Stops for {name}: {stops}")
 
@@ -107,7 +110,7 @@ async def get_stop_id(
     return [
         {CONF_DEPARTURES_NAME: stop["name"], CONF_DEPARTURES_STOP_ID: stop["id"]}
         for stop in stops
-        if stop["type"] == "stop"
+        if stop.get("type") == "stop"
     ]
 
 
@@ -277,8 +280,11 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
         # (for example when it was explicitly disabled)
         return await async_create_api(self.hass, api_endpoint)
 
-    async def _async_search_stops(self, query: str) -> list[dict[str, Any]]:
-        """Search stops by name using the hub's API endpoint."""
+    async def _async_search_stops(self, query: str) -> list[dict[str, Any]] | None:
+        """Search stops by name using the hub's API endpoint.
+
+        Returns None if the API fails, so that is not mistaken for no matches.
+        """
         _, max_results = self._hub_search_args()
         return await get_stop_id(await self._async_api(), query, max_results)
 
@@ -317,12 +323,14 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
         """Search for a stop using the hub's API endpoint."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            self.data[CONF_FOUND_STOPS] = await self._async_search_stops(
-                user_input[CONF_SEARCH]
-            )
-            if self.data[CONF_FOUND_STOPS]:
+            found = await self._async_search_stops(user_input[CONF_SEARCH])
+            if found is None:
+                errors["base"] = "cannot_connect"
+            elif not found:
+                errors[CONF_SEARCH] = "no_stops_found"
+            else:
+                self.data[CONF_FOUND_STOPS] = found
                 return await self.async_step_stop()
-            errors[CONF_SEARCH] = "no_stops_found"
 
         return self.async_show_form(
             step_id="user",
@@ -374,10 +382,14 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
             self.data[key] = user_input[key]
             query = user_input.get(CONF_SEARCH, "").strip()
             if query:
-                self.data[CONF_FOUND_STOPS] = await self._async_search_stops(query)
-                if self.data[CONF_FOUND_STOPS]:
+                found = await self._async_search_stops(query)
+                if found is None:
+                    errors["base"] = "cannot_connect"
+                elif not found:
+                    errors[CONF_SEARCH] = "no_stops_found"
+                else:
+                    self.data[CONF_FOUND_STOPS] = found
                     return await results_step()
-                errors[CONF_SEARCH] = "no_stops_found"
                 suggested_values[CONF_SEARCH] = query
             elif not typed:
                 return await next_step()
