@@ -77,11 +77,11 @@
           "title": "Further Details",
           "description": "Add further details",
           "data_description": {
-            "excluded_lines": "Drop these lines from the results, e.g. S41."
+            "excluded_lines": "Pick lines that serve this stop, or type a line name, e.g. S41."
           },
           "data": {
             "walking_time": "Walking time in minutes",
-            "excluded_lines": "Ignored line",
+            "excluded_lines": "Ignored lines",
             "show_official_line_colors": "Enable official VBB line colors",
             "duration": "Show departures for how many minutes?",
             "suburban": "Include S-Bahn",

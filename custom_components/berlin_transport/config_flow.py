@@ -60,27 +60,32 @@ HUB_SCHEMA = vol.Schema(
 )
 
 
-def string_list_selector() -> selector.TextSelector:
-    """Free-form multi-value input, one text field per value.
+def details_schema(line_names: list[str]) -> vol.Schema:
+    """The remaining per-stop settings.
 
-    The frontend repeats the field label on every row, so the labels of the
-    options using this are phrased in the singular.
+    `line_names` are offered as lines to exclude. Any other line name can still
+    be typed in, e.g. one the API does not list for the stop.
     """
-    return selector.TextSelector(selector.TextSelectorConfig(multiple=True))
+    return vol.Schema(
+        {
+            vol.Optional(
+                CONF_DEPARTURES_EXCLUDED_LINES,
+                default=list,
+            ): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=line_names,
+                    multiple=True,
+                    custom_value=True,
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            ),
+            vol.Optional(CONF_DEPARTURES_DURATION): cv.positive_int,
+            vol.Optional(CONF_DEPARTURES_WALKING_TIME, default=1): cv.positive_int,
+            vol.Optional(CONF_SHOW_API_LINE_COLORS, default=False): cv.boolean,
+            **TRANSPORT_TYPES_SCHEMA,
+        }
+    )
 
-
-DATA_SCHEMA = vol.Schema(
-    {
-        vol.Optional(
-            CONF_DEPARTURES_EXCLUDED_LINES,
-            default=list,
-        ): string_list_selector(),
-        vol.Optional(CONF_DEPARTURES_DURATION): cv.positive_int,
-        vol.Optional(CONF_DEPARTURES_WALKING_TIME, default=1): cv.positive_int,
-        vol.Optional(CONF_SHOW_API_LINE_COLORS, default=False): cv.boolean,
-        **TRANSPORT_TYPES_SCHEMA,
-    }
-)
 
 NAME_SCHEMA = vol.Schema(
     {
@@ -111,6 +116,20 @@ async def get_stop_name(api: TransportApi, stop_id: str) -> str | None:
     stop = await api.stop(stop_id, {})
     name: str | None = stop.get("name") if stop else None
     return name
+
+
+async def get_line_names(api: TransportApi, stop_id: str) -> list[str]:
+    """The names of the lines serving a stop, or none if the API fails.
+
+    A name can be listed more than once, e.g. for a tram line and the bus
+    replacing it, but is only returned once.
+    """
+    stop = await api.stop(stop_id, {"linesOfStops": "true"}) or {}
+    return list(
+        dict.fromkeys(
+            line["name"] for line in stop.get("lines", []) if line.get("name")
+        )
+    )
 
 
 def stop_label(stop: Mapping[str, Any]) -> str:
@@ -454,14 +473,24 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
         """Collect the remaining per-stop settings and save the stop."""
         reconfiguring = self.source == config_entries.SOURCE_RECONFIGURE
         if user_input is None:
-            schema = DATA_SCHEMA
+            current: Mapping[str, Any] = {}
             if reconfiguring:
-                schema = self.add_suggested_values_to_schema(
-                    schema, dict(self._get_reconfigure_subentry().data)
+                current = self._get_reconfigure_subentry().data
+            line_names = await get_line_names(
+                await self._async_api(), self.data[CONF_DEPARTURES_STOP_ID]
+            )
+            # Keep offering the lines already excluded, even if the API no
+            # longer lists them (or could not be reached).
+            line_names = list(
+                dict.fromkeys(
+                    [*line_names, *current.get(CONF_DEPARTURES_EXCLUDED_LINES, [])]
                 )
+            )
             return self.async_show_form(
                 step_id="details",
-                data_schema=schema,
+                data_schema=self.add_suggested_values_to_schema(
+                    details_schema(line_names), current
+                ),
                 errors={},
             )
 

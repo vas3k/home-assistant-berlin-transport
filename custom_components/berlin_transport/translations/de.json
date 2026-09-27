@@ -77,11 +77,11 @@
           "title": "Weitere Details",
           "description": "Zusätzliche Einstellungen",
           "data_description": {
-            "excluded_lines": "Diese Linien aus den Ergebnissen entfernen, z. B. S41."
+            "excluded_lines": "Linien dieser Haltestelle auswählen oder einen Liniennamen eingeben, z. B. S41."
           },
           "data": {
             "walking_time": "Gehminuten zur Haltestelle",
-            "excluded_lines": "Ignorierte Linie",
+            "excluded_lines": "Ignorierte Linien",
             "show_official_line_colors": "Offizielle VBB-Farben verwenden",
             "duration": "Zeitraum für Abfahrten (Minuten)",
             "suburban": "S-Bahn anzeigen",
