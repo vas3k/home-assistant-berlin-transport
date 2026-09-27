@@ -96,6 +96,9 @@
       },
       "error": {
         "no_stops_found": "Keine Haltestellen gefunden. Prüfe die Schreibweise oder versuche es später erneut, falls die API nicht erreichbar ist."
+      },
+      "abort": {
+        "reconfigure_successful": "Die Haltestelle wurde aktualisiert. Die neuen Einstellungen gelten ab sofort."
       }
     }
   },
