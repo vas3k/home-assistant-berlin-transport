@@ -58,12 +58,12 @@ Repeat for every stop you want. All stops under one hub share the same API endpo
 
 | Setting                               | Default | Description |
 | ------------------------------------- | ------- | ----------- |
-| Walking time in minutes               | `1`     | Time needed to walk to the stop. Departures you could not reach in time are hidden. |
+| Walking time to stop (minutes)        | `1`     | Time needed to walk to the stop. Departures you could not reach in time are hidden. |
 | Filter departures by direction        | not set | Stops along the intended lines, or their final destinations. Chosen on a page of their own: search by name, or type a `stop_id`. |
 | Exclude nearby stops                  | not set | Stops whose departures to drop from the results. Use this when the API returns departures from nearby stops. Chosen on a page of their own: search by name, or type a `stop_id`. |
 | Exclude lines by name                 | not set | Lines to drop from the results. Pick from the lines serving the stop, or type a line name, e.g. `S41`. |
-| Show departures for how many minutes? | not set | How far into the future to fetch departures. Leave empty to use the API's own default window. |
-| Enable official VBB line colors       | off     | Use the colors reported by the API instead of the predefined ones. |
+| Departure time range (minutes)        | not set | How far into the future to fetch departures. Leave empty to use the API's own default window. |
+| Use official VBB line colors          | off     | Use the colors reported by the API instead of the predefined ones. |
 | Transport types                       | all on  | Which products to include: S-Bahn, U-Bahn, Tram, Bus, Ferry, IC/ICE, RB/RE. |
 
 ### 3. Change settings later
