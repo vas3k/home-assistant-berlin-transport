@@ -83,6 +83,9 @@
             "regional": "RB/RE anzeigen"
           }
         }
+      },
+      "error": {
+        "no_stops_found": "Keine Haltestellen gefunden. Prüfe die Schreibweise oder versuche es später erneut, falls die API nicht erreichbar ist."
       }
     }
   },

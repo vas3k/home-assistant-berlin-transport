@@ -83,6 +83,9 @@
             "regional": "Show RB/RE"
           }
         }
+      },
+      "error": {
+        "no_stops_found": "No stops found. Check the spelling or try again later if the API is unavailable."
       }
     }
   },
