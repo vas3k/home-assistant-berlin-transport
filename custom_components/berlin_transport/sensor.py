@@ -169,8 +169,6 @@ class TransportSensor(SensorEntity):
     # database. The state already shows the next departure.
     _unrecorded_attributes = frozenset({"departures"})
 
-    departures: list[Departure] = []
-
     def __init__(
         self,
         hass: HomeAssistant,
@@ -201,6 +199,7 @@ class TransportSensor(SensorEntity):
         # we add +1 minute anyway to delete the "just gone" transport
         self.show_api_line_colors: bool = config.get(CONF_SHOW_API_LINE_COLORS) or False
         self.api = api
+        self.departures: list[Departure] = []
         self.last_update_success: datetime | None = None
         self._attr_available: bool = True
 

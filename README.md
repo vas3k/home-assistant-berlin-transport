@@ -166,7 +166,8 @@ To run the same checks CI runs, install the development dependencies (any Python
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
 
-black --extend-exclude="custom_components/berlin_transport/const.py" --diff --check .
+ruff format --diff .
+ruff check .
 pylint $(git ls-files '*.py')
 mypy $(git ls-files '*.py')
 ```

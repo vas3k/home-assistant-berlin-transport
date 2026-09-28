@@ -1,5 +1,5 @@
 # Linters and formatters used by .github/workflows/code-quality.yml
-black
+ruff
 pylint
 mypy
 

@@ -72,7 +72,7 @@ class Departure:
             fallback_color=line_visuals.get("color"),
             location=location,
             cancelled=source.get("cancelled", False),
-            delay=source.get("delay", None),
+            delay=source.get("delay"),
             warnings=[
                 {"id": r["id"], "summary": r["summary"]}
                 for r in source.get("remarks", [])

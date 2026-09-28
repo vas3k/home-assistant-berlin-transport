@@ -1,4 +1,4 @@
-name: Black, Pylint, MyPy
+name: Ruff, Pylint, MyPy
 on: [push, pull_request]
 
 jobs:
@@ -13,6 +13,7 @@ jobs:
           python-version: "3.13"
       - run: pip install --upgrade pip
       - run: pip install -r requirements-dev.txt
-      - run: black --extend-exclude="custom_components/berlin_transport/const.py" --diff --check .
+      - run: ruff format --diff .
+      - run: ruff check --output-format=github .
       - run: pylint $(git ls-files '*.py')
       - run: mypy $(git ls-files '*.py')
