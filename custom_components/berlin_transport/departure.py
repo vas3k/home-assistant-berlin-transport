@@ -13,10 +13,19 @@ class DepartureDict(TypedDict):
     timestamp: datetime
     direction: str | None
     color: str | None
+    # Text color that goes with `color`. Only set for the official line colors,
+    # the default colors all work with white text.
+    text_color: str | None
     cancelled: bool
     delay: int | None
     warnings: list[dict[str, str]] | None
     walking_time: int
+    # `platform` differs from `planned_platform` when the platform changed.
+    platform: str | None
+    planned_platform: str | None
+    # Only set when the departure leaves from another stop than the one
+    # configured, e.g. a nearby stop of the same station.
+    other_stop_name: str | None
 
 
 @dataclass
@@ -31,11 +40,16 @@ class Departure:
     icon: str
     direction: str | None = None
     bg_color: str | None = None
+    fg_color: str | None = None
     fallback_color: str | None = None
     location: tuple[float, float] | None = None
     cancelled: bool = False
     delay: int | None = None
     warnings: list[dict[str, str]] | None = None
+    platform: str | None = None
+    planned_platform: str | None = None
+    stop_id: str | None = None
+    stop_name: str | None = None
 
     @classmethod
     def from_dict(cls, source: dict[str, Any]) -> "Departure":
@@ -61,6 +75,9 @@ class Departure:
             else None
         )
 
+        line_color = line.get("color") or {}
+        stop = source.get("stop") or {}
+
         return cls(
             trip_id=source.get("tripId", "unknown"),
             line_name=line.get("name"),  # type: ignore
@@ -68,7 +85,8 @@ class Departure:
             timestamp=timestamp,
             direction=source.get("direction"),
             icon=line_visuals.get("icon") or DEFAULT_ICON,
-            bg_color=line.get("color", {}).get("bg"),
+            bg_color=line_color.get("bg"),
+            fg_color=line_color.get("fg"),
             fallback_color=line_visuals.get("color"),
             location=location,
             cancelled=source.get("cancelled", False),
@@ -79,16 +97,35 @@ class Departure:
                 if r.get("type") == "warning" and r.get("summary")
             ]
             or None,
+            platform=source.get("platform"),
+            planned_platform=source.get("plannedPlatform"),
+            stop_id=stop.get("id"),
+            stop_name=stop.get("name"),
         )
 
     @cached_property
     def time(self) -> str:
         return self.timestamp.strftime("%H:%M")
 
-    def to_dict(self, show_api_line_colors: bool, walking_time: int) -> DepartureDict:
+    def to_dict(
+        self,
+        show_api_line_colors: bool,
+        walking_time: int,
+        stop_id: str | int | None = None,
+    ) -> DepartureDict:
+        """The departure as shown in the sensor's `departures` attribute.
+
+        `stop_id` is the configured stop, departures from other stops get the
+        name of the stop they leave from.
+        """
         color = self.fallback_color
+        text_color = None
         if show_api_line_colors and self.bg_color is not None:
             color = self.bg_color
+            text_color = self.fg_color
+        other_stop_name = None
+        if stop_id is not None and self.stop_id != str(stop_id):
+            other_stop_name = self.stop_name
         return {
             "line_name": self.line_name,
             "line_type": self.line_type,
@@ -96,10 +133,14 @@ class Departure:
             "timestamp": self.timestamp,
             "direction": self.direction,
             "color": color,
+            "text_color": text_color,
             "cancelled": self.cancelled,
             "delay": self.delay,
             "warnings": self.warnings,
             "walking_time": walking_time,
+            "platform": self.platform,
+            "planned_platform": self.planned_platform,
+            "other_stop_name": other_stop_name,
         }
 
     # Make the object hashable and use all infos that can be displayed in the
