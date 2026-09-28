@@ -95,7 +95,8 @@
         }
       },
       "error": {
-        "no_stops_found": "Keine Haltestellen gefunden. Prüfe die Schreibweise oder versuche es später erneut, falls die API nicht erreichbar ist."
+        "no_stops_found": "Keine Haltestellen gefunden. Prüfe die Schreibweise.",
+        "cannot_connect": "Die API ist nicht erreichbar. Prüfe den API-Endpunkt des Hubs oder versuche es später erneut."
       },
       "abort": {
         "reconfigure_successful": "Die Haltestelle wurde aktualisiert. Die neuen Einstellungen gelten ab sofort."

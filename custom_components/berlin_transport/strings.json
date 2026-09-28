@@ -95,7 +95,8 @@
         }
       },
       "error": {
-        "no_stops_found": "No stops found. Check the spelling or try again later if the API is unavailable."
+        "no_stops_found": "No stops found. Check the spelling.",
+        "cannot_connect": "Could not reach the API. Check the hub's API endpoint or try again later."
       },
       "abort": {
         "reconfigure_successful": "The stop was updated. The new settings apply right away."
