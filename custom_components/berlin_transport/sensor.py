@@ -180,8 +180,9 @@ class TransportSensor(SensorEntity):
         self.api_max_results: int = (
             config.get(CONF_API_MAX_RESULTS) or DEFAULT_API_MAX_RESULTS
         )
+        # 0 turns the fallback off, so only use the default when it is unset.
         self.fallback_time: timedelta = timedelta(
-            minutes=config.get(CONF_FALLBACK_TIME) or DEFAULT_FALLBACK_TIME
+            minutes=config.get(CONF_FALLBACK_TIME, DEFAULT_FALLBACK_TIME)
         )
         self.stop_id: int = config[CONF_DEPARTURES_STOP_ID]
         # Config entries store these as lists; YAML may still hold the legacy
@@ -191,7 +192,8 @@ class TransportSensor(SensorEntity):
         self.sensor_name: str | None = config.get(CONF_DEPARTURES_NAME)
         self.directions = as_string_list(config.get(CONF_DEPARTURES_DIRECTION))
         self.duration: int | None = config.get(CONF_DEPARTURES_DURATION)
-        self.walking_time: int = config.get(CONF_DEPARTURES_WALKING_TIME) or 1
+        # 0 also shows the departures leaving right now.
+        self.walking_time: int = config.get(CONF_DEPARTURES_WALKING_TIME, 1)
         # we add +1 minute anyway to delete the "just gone" transport
         self.show_api_line_colors: bool = config.get(CONF_SHOW_API_LINE_COLORS) or False
         self.api = api
