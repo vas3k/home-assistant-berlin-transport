@@ -142,11 +142,11 @@ async def async_setup_platform(
         # so we use one api client across all of them with the default endpoint.
         api = await async_create_api(hass, DEFAULT_API_ENDPOINT)
         for departure in config[CONF_DEPARTURES]:
-            async_add_entities([TransportSensor(hass, departure, api)], True)
+            async_add_entities([TransportSensor(departure, api)], True)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
+    hass: HomeAssistant,  # pylint: disable=unused-argument
     config_entry: TransportConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
@@ -159,7 +159,7 @@ async def async_setup_entry(
         config = {**hub_config, **subentry.data}
         unique_id = subentry.data.get(CONF_UNIQUE_ID) or subentry_id
         async_add_entities(
-            [TransportSensor(hass, config, config_entry.runtime_data, unique_id)],
+            [TransportSensor(config, config_entry.runtime_data, unique_id)],
             update_before_add=True,
             config_subentry_id=subentry_id,
         )
@@ -172,7 +172,6 @@ class TransportSensor(SensorEntity):
 
     def __init__(
         self,
-        hass: HomeAssistant,
         config: Mapping[str, Any],
         api: TransportApi,
         unique_id: str | None = None,
@@ -182,7 +181,6 @@ class TransportSensor(SensorEntity):
         `unique_id` is only passed for stops of a hub, which get a device of
         their own. YAML stops have no config entry to attach a device to.
         """
-        self.hass: HomeAssistant = hass
         self.config = config
         self.api_max_results: int = (
             config.get(CONF_API_MAX_RESULTS) or DEFAULT_API_MAX_RESULTS
