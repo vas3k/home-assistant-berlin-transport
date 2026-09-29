@@ -174,11 +174,10 @@ class TransportSensor(SensorEntity):
         hass: HomeAssistant,
         config: Mapping[str, Any],
         api: TransportApi,
-        entry_id: str | None = None,
+        unique_id: str | None = None,
     ) -> None:
         self.hass: HomeAssistant = hass
         self.config = config
-        self._entry_id = entry_id
         self.api_max_results: int = (
             config.get(CONF_API_MAX_RESULTS) or DEFAULT_API_MAX_RESULTS
         )
@@ -203,9 +202,10 @@ class TransportSensor(SensorEntity):
         self.last_update_success: datetime | None = None
         self._attr_available: bool = True
 
-    @property
-    def name(self) -> str:
-        return self.sensor_name or f"Stop ID: {self.stop_id}"
+        self._attr_name = self.sensor_name or f"Stop ID: {self.stop_id}"
+        self._attr_unique_id = (
+            unique_id or f"stop_{self.stop_id}_{self.sensor_name}_departures"
+        )
 
     @property
     def icon(self) -> str:
@@ -213,10 +213,6 @@ class TransportSensor(SensorEntity):
         if next_departure:
             return next_departure.icon
         return DEFAULT_ICON
-
-    @property
-    def unique_id(self) -> str:
-        return self._entry_id or f"stop_{self.stop_id}_{self.sensor_name}_departures"
 
     @property
     def native_value(self) -> str:
