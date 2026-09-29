@@ -10,6 +10,9 @@
           "fallback_time": "Überbrückungszeit in Minuten (für diese Zeit werden die letzten Ergebnisse angezeigt, wenn die API nicht erreichbar ist)"
         }
       }
+    },
+    "error": {
+      "endpoint_in_use": "Ein anderer Hub nutzt diesen API-Endpunkt bereits."
     }
   },
   "config_subentries": {
@@ -114,6 +117,9 @@
           "fallback_time": "Überbrückungszeit in Minuten (für diese Zeit werden die letzten Ergebnisse angezeigt, wenn die API nicht erreichbar ist)"
         }
       }
+    },
+    "error": {
+      "endpoint_in_use": "Ein anderer Hub nutzt diesen API-Endpunkt bereits."
     }
   },
   "issues": {
