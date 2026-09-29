@@ -12,7 +12,8 @@
       }
     },
     "error": {
-      "endpoint_in_use": "Another hub already uses this API endpoint."
+      "endpoint_in_use": "Another hub already uses this API endpoint.",
+      "cannot_connect": "Could not reach the API. Check the endpoint URL and try again."
     }
   },
   "config_subentries": {
@@ -119,7 +120,8 @@
       }
     },
     "error": {
-      "endpoint_in_use": "Another hub already uses this API endpoint."
+      "endpoint_in_use": "Another hub already uses this API endpoint.",
+      "cannot_connect": "Could not reach the API. Check the endpoint URL and try again."
     }
   },
   "issues": {
