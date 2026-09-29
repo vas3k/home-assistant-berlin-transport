@@ -552,17 +552,29 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Manage the options."""
+        """Manage the options.
+
+        The hub's title follows the endpoint, unless it was renamed.
+        """
+        entry = self.config_entry
         if user_input is not None:
-            endpoint = normalize_endpoint(user_input[CONF_API_ENDPOINT])
-            return self.async_create_entry(
-                data={**user_input, CONF_API_ENDPOINT: endpoint}
+            old_endpoint = normalize_endpoint(
+                entry.options.get(CONF_API_ENDPOINT) or DEFAULT_API_ENDPOINT
             )
+            endpoint = normalize_endpoint(user_input[CONF_API_ENDPOINT])
+            options = {**user_input, CONF_API_ENDPOINT: endpoint}
+            if normalize_endpoint(entry.title) == old_endpoint:
+                # Update the title together with the options, so the hub is
+                # reloaded once and not once for each change.
+                self.hass.config_entries.async_update_entry(
+                    entry, title=endpoint, options=options
+                )
+            return self.async_create_entry(data=options)
 
         return self.async_show_form(
             step_id="init",
             data_schema=self.add_suggested_values_to_schema(
                 HUB_SCHEMA,
-                self.config_entry.options,
+                entry.options,
             ),
         )
