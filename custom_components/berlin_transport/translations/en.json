@@ -8,12 +8,21 @@
           "api_endpoint": "API endpoint URL",
           "api_max_results": "Maximum number of results per request",
           "fallback_time": "Fallback time in minutes (keep showing the last fetched departures for this time while the API is unavailable)"
+        },
+        "sections": {
+          "endpoint_checks": {
+            "name": "Endpoint checks",
+            "data": {
+              "check_reachable": "Check whether the endpoint is reachable",
+              "allow_shared_endpoint": "Allow more than one hub for this endpoint"
+            }
+          }
         }
       }
     },
     "error": {
-      "endpoint_in_use": "Another hub already uses this API endpoint.",
-      "cannot_connect": "Could not reach the API. Check the endpoint URL and try again."
+      "endpoint_in_use": "Another hub already uses this API endpoint. To add it anyway, allow more than one hub for this endpoint under Endpoint checks.",
+      "cannot_connect": "Could not reach the API. Check the endpoint URL, or turn off the reachability check under Endpoint checks."
     }
   },
   "config_subentries": {
@@ -116,12 +125,22 @@
           "api_endpoint": "API endpoint URL",
           "api_max_results": "Maximum number of results per request",
           "fallback_time": "Fallback time in minutes (keep showing the last fetched departures for this time while the API is unavailable)"
+        },
+        "sections": {
+          "endpoint_checks": {
+            "name": "Endpoint checks",
+            "data": {
+              "check_reachable": "Check whether the endpoint is reachable",
+              "allow_shared_endpoint": "Allow more than one hub for this endpoint"
+            },
+            "description": "Only used when the endpoint is changed."
+          }
         }
       }
     },
     "error": {
-      "endpoint_in_use": "Another hub already uses this API endpoint.",
-      "cannot_connect": "Could not reach the API. Check the endpoint URL and try again."
+      "endpoint_in_use": "Another hub already uses this API endpoint. To add it anyway, allow more than one hub for this endpoint under Endpoint checks.",
+      "cannot_connect": "Could not reach the API. Check the endpoint URL, or turn off the reachability check under Endpoint checks."
     }
   },
   "issues": {

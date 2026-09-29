@@ -10,6 +10,7 @@ import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.data_entry_flow import section
 from homeassistant.helpers import selector
 
 from .api import TransportApi, async_create_api
@@ -41,6 +42,11 @@ _LOGGER = logging.getLogger(__name__)
 CONF_SEARCH = "search"
 CONF_FOUND_STOPS = "found_stops"
 CONF_SELECTED_STOPS = "selected_stops"
+# Collapsed section of the hub form with the checks of a new endpoint. Its
+# values only steer the checks and are not stored with the hub.
+CONF_ENDPOINT_CHECKS = "endpoint_checks"
+CONF_CHECK_REACHABLE = "check_reachable"
+CONF_ALLOW_SHARED_ENDPOINT = "allow_shared_endpoint"
 
 # Stop list options that get a page of their own, where stops are searched by
 # name instead of typed in by id.
@@ -56,6 +62,21 @@ HUB_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_FALLBACK_TIME, default=DEFAULT_FALLBACK_TIME
         ): cv.positive_int,
+    }
+)
+
+
+HUB_FORM_SCHEMA = HUB_SCHEMA.extend(
+    {
+        vol.Optional(CONF_ENDPOINT_CHECKS, default={}): section(
+            vol.Schema(
+                {
+                    vol.Optional(CONF_CHECK_REACHABLE, default=True): cv.boolean,
+                    vol.Optional(CONF_ALLOW_SHARED_ENDPOINT, default=False): cv.boolean,
+                }
+            ),
+            {"collapsed": True},
+        ),
     }
 )
 
@@ -232,6 +253,31 @@ async def async_endpoint_reachable(hass: HomeAssistant, endpoint: str) -> bool:
     return isinstance(await api.locations("Berlin", 1), list)
 
 
+async def async_endpoint_errors(
+    hass: HomeAssistant,
+    endpoint: str,
+    checks: Mapping[str, Any],
+    exclude_entry_id: str | None = None,
+) -> dict[str, str]:
+    """The form errors of a new endpoint, from the checks left turned on."""
+    if not checks.get(CONF_ALLOW_SHARED_ENDPOINT, False) and endpoint_in_use(
+        hass, endpoint, exclude_entry_id
+    ):
+        return {CONF_API_ENDPOINT: "endpoint_in_use"}
+    if checks.get(CONF_CHECK_REACHABLE, True) and not await async_endpoint_reachable(
+        hass, endpoint
+    ):
+        return {"base": "cannot_connect"}
+    return {}
+
+
+def hub_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
+    """The hub form's input without the endpoint checks, as stored on the hub."""
+    options = {k: v for k, v in user_input.items() if k != CONF_ENDPOINT_CHECKS}
+    options[CONF_API_ENDPOINT] = normalize_endpoint(options[CONF_API_ENDPOINT])
+    return options
+
+
 class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Create a hub entry that holds the API endpoint and shared settings."""
 
@@ -263,24 +309,25 @@ class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Create the hub, one per API endpoint."""
+        """Create the hub, by default one per API endpoint."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            endpoint = normalize_endpoint(user_input[CONF_API_ENDPOINT])
-            if endpoint_in_use(self.hass, endpoint):
-                errors[CONF_API_ENDPOINT] = "endpoint_in_use"
-            elif not await async_endpoint_reachable(self.hass, endpoint):
-                errors["base"] = "cannot_connect"
-            else:
+            options = hub_options(user_input)
+            errors = await async_endpoint_errors(
+                self.hass,
+                options[CONF_API_ENDPOINT],
+                user_input.get(CONF_ENDPOINT_CHECKS, {}),
+            )
+            if not errors:
                 return self.async_create_entry(
-                    title=endpoint,
-                    data={},
-                    options={**user_input, CONF_API_ENDPOINT: endpoint},
+                    title=options[CONF_API_ENDPOINT], data={}, options=options
                 )
 
         return self.async_show_form(
             step_id="user",
-            data_schema=self.add_suggested_values_to_schema(HUB_SCHEMA, user_input),
+            data_schema=self.add_suggested_values_to_schema(
+                HUB_FORM_SCHEMA, user_input
+            ),
             errors=errors,
         )
 
@@ -579,7 +626,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         """Manage the options.
 
         A new endpoint is only accepted if no other hub uses it and it can be
-        reached. The hub's title follows the endpoint, unless it was renamed.
+        reached, unless the user turned these checks off. The hub's title
+        follows the endpoint, unless it was renamed.
         """
         entry = self.config_entry
         errors: dict[str, str] = {}
@@ -587,15 +635,17 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             old_endpoint = normalize_endpoint(
                 entry.options.get(CONF_API_ENDPOINT) or DEFAULT_API_ENDPOINT
             )
-            endpoint = normalize_endpoint(user_input[CONF_API_ENDPOINT])
+            options = hub_options(user_input)
+            endpoint = options[CONF_API_ENDPOINT]
             if endpoint != old_endpoint:
-                if endpoint_in_use(self.hass, endpoint, entry.entry_id):
-                    errors[CONF_API_ENDPOINT] = "endpoint_in_use"
-                elif not await async_endpoint_reachable(self.hass, endpoint):
-                    errors["base"] = "cannot_connect"
+                errors = await async_endpoint_errors(
+                    self.hass,
+                    endpoint,
+                    user_input.get(CONF_ENDPOINT_CHECKS, {}),
+                    entry.entry_id,
+                )
 
             if not errors:
-                options = {**user_input, CONF_API_ENDPOINT: endpoint}
                 if normalize_endpoint(entry.title) == old_endpoint:
                     # Update the title together with the options, so the hub
                     # is reloaded once and not once for each change.
@@ -607,7 +657,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         return self.async_show_form(
             step_id="init",
             data_schema=self.add_suggested_values_to_schema(
-                HUB_SCHEMA,
+                HUB_FORM_SCHEMA,
                 user_input or entry.options,
             ),
             errors=errors,
