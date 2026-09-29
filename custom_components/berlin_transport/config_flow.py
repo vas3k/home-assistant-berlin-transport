@@ -226,6 +226,12 @@ def endpoint_in_use(
     )
 
 
+async def async_endpoint_reachable(hass: HomeAssistant, endpoint: str) -> bool:
+    """Whether `endpoint` answers a stop search with a list of locations."""
+    api = await async_create_api(hass, endpoint)
+    return isinstance(await api.locations("Berlin", 1), list)
+
+
 class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Create a hub entry that holds the API endpoint and shared settings."""
 
@@ -263,6 +269,8 @@ class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             endpoint = normalize_endpoint(user_input[CONF_API_ENDPOINT])
             if endpoint_in_use(self.hass, endpoint):
                 errors[CONF_API_ENDPOINT] = "endpoint_in_use"
+            elif not await async_endpoint_reachable(self.hass, endpoint):
+                errors["base"] = "cannot_connect"
             else:
                 return self.async_create_entry(
                     title=endpoint,
@@ -570,8 +578,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     ) -> config_entries.ConfigFlowResult:
         """Manage the options.
 
-        A new endpoint is only accepted if no other hub uses it. The hub's
-        title follows the endpoint, unless it was renamed.
+        A new endpoint is only accepted if no other hub uses it and it can be
+        reached. The hub's title follows the endpoint, unless it was renamed.
         """
         entry = self.config_entry
         errors: dict[str, str] = {}
@@ -580,10 +588,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 entry.options.get(CONF_API_ENDPOINT) or DEFAULT_API_ENDPOINT
             )
             endpoint = normalize_endpoint(user_input[CONF_API_ENDPOINT])
-            if endpoint != old_endpoint and endpoint_in_use(
-                self.hass, endpoint, entry.entry_id
-            ):
-                errors[CONF_API_ENDPOINT] = "endpoint_in_use"
+            if endpoint != old_endpoint:
+                if endpoint_in_use(self.hass, endpoint, entry.entry_id):
+                    errors[CONF_API_ENDPOINT] = "endpoint_in_use"
+                elif not await async_endpoint_reachable(self.hass, endpoint):
+                    errors["base"] = "cannot_connect"
 
             if not errors:
                 options = {**user_input, CONF_API_ENDPOINT: endpoint}

@@ -12,7 +12,8 @@
       }
     },
     "error": {
-      "endpoint_in_use": "Ein anderer Hub nutzt diesen API-Endpunkt bereits."
+      "endpoint_in_use": "Ein anderer Hub nutzt diesen API-Endpunkt bereits.",
+      "cannot_connect": "Die API ist nicht erreichbar. Prüfe die URL des API-Endpunkts und versuche es erneut."
     }
   },
   "config_subentries": {
@@ -119,7 +120,8 @@
       }
     },
     "error": {
-      "endpoint_in_use": "Ein anderer Hub nutzt diesen API-Endpunkt bereits."
+      "endpoint_in_use": "Ein anderer Hub nutzt diesen API-Endpunkt bereits.",
+      "cannot_connect": "Die API ist nicht erreichbar. Prüfe die URL des API-Endpunkts und versuche es erneut."
     }
   },
   "issues": {
