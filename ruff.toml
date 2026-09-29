@@ -1,0 +1,30 @@
+# Formatter and linter settings, used by .github/workflows/code-quality.yml.
+# Pylint (.pylintrc) and mypy (mypy.ini) still run next to ruff.
+
+# Minimum python version for HA 2025.3
+target-version = "py313"
+line-length = 88
+
+[lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "UP",    # pyupgrade
+    "B",     # flake8-bugbear
+    "C4",    # flake8-comprehensions
+    "PIE",   # flake8-pie
+    "SIM",   # flake8-simplify
+    "RUF",   # ruff-specific rules
+    "ASYNC", # flake8-async
+    "LOG",   # flake8-logging
+    "DTZ",   # flake8-datetimez
+    "PERF",  # perflint
+    "FURB",  # refurb
+]
+ignore = [
+    # `TransportApi._get` takes a timeout and applies it with asyncio.timeout
+    # itself, so its callers do not each have to.
+    "ASYNC109",
+]
