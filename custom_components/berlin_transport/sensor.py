@@ -10,6 +10,7 @@ import voluptuous as vol
 from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import (
     AddConfigEntryEntitiesCallback,
     AddEntitiesCallback,
@@ -176,6 +177,11 @@ class TransportSensor(SensorEntity):
         api: TransportApi,
         unique_id: str | None = None,
     ) -> None:
+        """Set up the sensor of a stop.
+
+        `unique_id` is only passed for stops of a hub, which get a device of
+        their own. YAML stops have no config entry to attach a device to.
+        """
         self.hass: HomeAssistant = hass
         self.config = config
         self.api_max_results: int = (
@@ -202,10 +208,21 @@ class TransportSensor(SensorEntity):
         self.last_update_success: datetime | None = None
         self._attr_available: bool = True
 
-        self._attr_name = self.sensor_name or f"Stop ID: {self.stop_id}"
-        self._attr_unique_id = (
-            unique_id or f"stop_{self.stop_id}_{self.sensor_name}_departures"
-        )
+        name = self.sensor_name or f"Stop ID: {self.stop_id}"
+        if unique_id is None:
+            self._attr_unique_id = f"stop_{self.stop_id}_{self.sensor_name}_departures"
+            self._attr_name = name
+        else:
+            self._attr_unique_id = unique_id
+            # The device carries the stop name, so other entities of the stop
+            # can be added next to the departures later.
+            self._attr_has_entity_name = True
+            self._attr_name = "Departures"
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, unique_id)},
+                name=name,
+                entry_type=DeviceEntryType.SERVICE,
+            )
 
     @property
     def icon(self) -> str:
