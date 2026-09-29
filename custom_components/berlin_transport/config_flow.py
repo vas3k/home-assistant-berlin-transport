@@ -209,6 +209,11 @@ def found_stops_schema(stops: list[dict[str, Any]]) -> vol.Schema:
     )
 
 
+def normalize_endpoint(endpoint: str) -> str:
+    """The endpoint without surrounding whitespace or trailing slashes."""
+    return endpoint.strip().rstrip("/")
+
+
 class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Create a hub entry that holds the API endpoint and shared settings."""
 
@@ -248,10 +253,11 @@ class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 errors={},
             )
 
+        endpoint = normalize_endpoint(user_input[CONF_API_ENDPOINT])
         return self.async_create_entry(
-            title=user_input[CONF_API_ENDPOINT],
+            title=endpoint,
             data={},
-            options=user_input,
+            options={**user_input, CONF_API_ENDPOINT: endpoint},
         )
 
 
@@ -548,7 +554,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     ) -> config_entries.ConfigFlowResult:
         """Manage the options."""
         if user_input is not None:
-            return self.async_create_entry(data=user_input)
+            endpoint = normalize_endpoint(user_input[CONF_API_ENDPOINT])
+            return self.async_create_entry(
+                data={**user_input, CONF_API_ENDPOINT: endpoint}
+            )
 
         return self.async_show_form(
             step_id="init",
