@@ -9,7 +9,7 @@ from typing import Any, Self
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import selector
 
 from .api import TransportApi, async_create_api
@@ -214,6 +214,18 @@ def normalize_endpoint(endpoint: str) -> str:
     return endpoint.strip().rstrip("/")
 
 
+def endpoint_in_use(
+    hass: HomeAssistant, endpoint: str, exclude_entry_id: str | None = None
+) -> bool:
+    """Whether a hub other than `exclude_entry_id` already uses `endpoint`."""
+    return any(
+        normalize_endpoint(entry.options.get(CONF_API_ENDPOINT) or DEFAULT_API_ENDPOINT)
+        == endpoint
+        for entry in hass.config_entries.async_entries(DOMAIN)
+        if entry.entry_id != exclude_entry_id
+    )
+
+
 class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Create a hub entry that holds the API endpoint and shared settings."""
 
@@ -245,19 +257,23 @@ class TransportConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Create the hub."""
-        if user_input is None:
-            return self.async_show_form(
-                step_id="user",
-                data_schema=HUB_SCHEMA,
-                errors={},
-            )
+        """Create the hub, one per API endpoint."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            endpoint = normalize_endpoint(user_input[CONF_API_ENDPOINT])
+            if endpoint_in_use(self.hass, endpoint):
+                errors[CONF_API_ENDPOINT] = "endpoint_in_use"
+            else:
+                return self.async_create_entry(
+                    title=endpoint,
+                    data={},
+                    options={**user_input, CONF_API_ENDPOINT: endpoint},
+                )
 
-        endpoint = normalize_endpoint(user_input[CONF_API_ENDPOINT])
-        return self.async_create_entry(
-            title=endpoint,
-            data={},
-            options={**user_input, CONF_API_ENDPOINT: endpoint},
+        return self.async_show_form(
+            step_id="user",
+            data_schema=self.add_suggested_values_to_schema(HUB_SCHEMA, user_input),
+            errors=errors,
         )
 
 
@@ -554,27 +570,36 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     ) -> config_entries.ConfigFlowResult:
         """Manage the options.
 
-        The hub's title follows the endpoint, unless it was renamed.
+        A new endpoint is only accepted if no other hub uses it. The hub's
+        title follows the endpoint, unless it was renamed.
         """
         entry = self.config_entry
+        errors: dict[str, str] = {}
         if user_input is not None:
             old_endpoint = normalize_endpoint(
                 entry.options.get(CONF_API_ENDPOINT) or DEFAULT_API_ENDPOINT
             )
             endpoint = normalize_endpoint(user_input[CONF_API_ENDPOINT])
-            options = {**user_input, CONF_API_ENDPOINT: endpoint}
-            if normalize_endpoint(entry.title) == old_endpoint:
-                # Update the title together with the options, so the hub is
-                # reloaded once and not once for each change.
-                self.hass.config_entries.async_update_entry(
-                    entry, title=endpoint, options=options
-                )
-            return self.async_create_entry(data=options)
+            if endpoint != old_endpoint and endpoint_in_use(
+                self.hass, endpoint, entry.entry_id
+            ):
+                errors[CONF_API_ENDPOINT] = "endpoint_in_use"
+
+            if not errors:
+                options = {**user_input, CONF_API_ENDPOINT: endpoint}
+                if normalize_endpoint(entry.title) == old_endpoint:
+                    # Update the title together with the options, so the hub
+                    # is reloaded once and not once for each change.
+                    self.hass.config_entries.async_update_entry(
+                        entry, title=endpoint, options=options
+                    )
+                return self.async_create_entry(data=options)
 
         return self.async_show_form(
             step_id="init",
             data_schema=self.add_suggested_values_to_schema(
                 HUB_SCHEMA,
-                entry.options,
+                user_input or entry.options,
             ),
+            errors=errors,
         )
