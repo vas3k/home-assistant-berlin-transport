@@ -27,6 +27,10 @@ class TransportApi:
         self.session = session
         self.endpoint = endpoint
         self.headers = {"User-Agent": user_agent}
+        # Whether the last request failed. Every stop of a hub shares this
+        # client and polls every 90 seconds, so an outage is only logged once
+        # per client instead of once per stop and poll.
+        self._failing = False
 
     async def _get(
         self,
@@ -42,16 +46,38 @@ class TransportApi:
                     headers=self.headers,
                 )
                 response.raise_for_status()
-                return await response.json()
-        except TimeoutError as ex:
-            _LOGGER.warning(f"API timeout for {path}: {ex}")
+                result = await response.json()
+        except TimeoutError:
+            self._log_failure(path, f"no answer within {timeout} seconds")
             return None
         except aiohttp.ClientError as ex:
-            _LOGGER.warning(f"API error for {path}: {ex}")
+            self._log_failure(path, ex)
             return None
         except Exception as ex:  # pylint: disable=broad-exception-caught
             _LOGGER.error(f"Unexpected error for {path}: {ex}")
             return None
+
+        if self._failing:
+            self._failing = False
+            _LOGGER.info("The API at %s works again", self.endpoint)
+        return result
+
+    def _log_failure(self, path: str, reason: object) -> None:
+        """Log the first failed request as a warning, the ones after it as debug."""
+        if self._failing:
+            _LOGGER.debug("API request to %s%s failed: %s", self.endpoint, path, reason)
+            return
+
+        self._failing = True
+        _LOGGER.warning(
+            (
+                "API request to %s%s failed: %s. Further errors are logged at "
+                "debug level until the API works again"
+            ),
+            self.endpoint,
+            path,
+            reason,
+        )
 
     async def locations(
         self, location_query: str, max_results: int
