@@ -10,6 +10,7 @@ import voluptuous as vol
 from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import (
     AddConfigEntryEntitiesCallback,
     AddEntitiesCallback,
@@ -141,11 +142,11 @@ async def async_setup_platform(
         # so we use one api client across all of them with the default endpoint.
         api = await async_create_api(hass, DEFAULT_API_ENDPOINT)
         for departure in config[CONF_DEPARTURES]:
-            async_add_entities([TransportSensor(hass, departure, api)], True)
+            async_add_entities([TransportSensor(departure, api)], True)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
+    hass: HomeAssistant,  # pylint: disable=unused-argument
     config_entry: TransportConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
@@ -158,7 +159,7 @@ async def async_setup_entry(
         config = {**hub_config, **subentry.data}
         unique_id = subentry.data.get(CONF_UNIQUE_ID) or subentry_id
         async_add_entities(
-            [TransportSensor(hass, config, config_entry.runtime_data, unique_id)],
+            [TransportSensor(config, config_entry.runtime_data, unique_id)],
             update_before_add=True,
             config_subentry_id=subentry_id,
         )
@@ -171,14 +172,16 @@ class TransportSensor(SensorEntity):
 
     def __init__(
         self,
-        hass: HomeAssistant,
         config: Mapping[str, Any],
         api: TransportApi,
-        entry_id: str | None = None,
+        unique_id: str | None = None,
     ) -> None:
-        self.hass: HomeAssistant = hass
+        """Set up the sensor of a stop.
+
+        `unique_id` is only passed for stops of a hub, which get a device of
+        their own. YAML stops have no config entry to attach a device to.
+        """
         self.config = config
-        self._entry_id = entry_id
         self.api_max_results: int = (
             config.get(CONF_API_MAX_RESULTS) or DEFAULT_API_MAX_RESULTS
         )
@@ -203,9 +206,21 @@ class TransportSensor(SensorEntity):
         self.last_update_success: datetime | None = None
         self._attr_available: bool = True
 
-    @property
-    def name(self) -> str:
-        return self.sensor_name or f"Stop ID: {self.stop_id}"
+        name = self.sensor_name or f"Stop ID: {self.stop_id}"
+        if unique_id is None:
+            self._attr_unique_id = f"stop_{self.stop_id}_{self.sensor_name}_departures"
+            self._attr_name = name
+        else:
+            self._attr_unique_id = unique_id
+            # The device carries the stop name, so other entities of the stop
+            # can be added next to the departures later.
+            self._attr_has_entity_name = True
+            self._attr_name = "Departures"
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, unique_id)},
+                name=name,
+                entry_type=DeviceEntryType.SERVICE,
+            )
 
     @property
     def icon(self) -> str:
@@ -213,10 +228,6 @@ class TransportSensor(SensorEntity):
         if next_departure:
             return next_departure.icon
         return DEFAULT_ICON
-
-    @property
-    def unique_id(self) -> str:
-        return self._entry_id or f"stop_{self.stop_id}_{self.sensor_name}_departures"
 
     @property
     def native_value(self) -> str:
