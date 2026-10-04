@@ -8,8 +8,21 @@
           "api_endpoint": "API-Endpunkt-URL",
           "api_max_results": "Maximale Ergebnisse pro Anfrage",
           "fallback_time": "Überbrückungszeit in Minuten (für diese Zeit werden die letzten Ergebnisse angezeigt, wenn die API nicht erreichbar ist)"
+        },
+        "sections": {
+          "endpoint_checks": {
+            "name": "Endpunkt-Prüfungen",
+            "data": {
+              "check_reachable": "Prüfen, ob der Endpunkt erreichbar ist",
+              "allow_shared_endpoint": "Mehrere Hubs für diesen Endpunkt erlauben"
+            }
+          }
         }
       }
+    },
+    "error": {
+      "endpoint_in_use": "Ein anderer Hub nutzt diesen API-Endpunkt bereits. Um ihn trotzdem zu verwenden, erlaube unter „Endpunkt-Prüfungen“ mehrere Hubs für diesen Endpunkt.",
+      "cannot_connect": "Die API ist nicht erreichbar. Prüfe die URL des API-Endpunkts oder schalte die Erreichbarkeitsprüfung unter „Endpunkt-Prüfungen“ aus."
     }
   },
   "config_subentries": {
@@ -112,8 +125,22 @@
           "api_endpoint": "API-Endpunkt-URL",
           "api_max_results": "Maximale Ergebnisse pro Anfrage",
           "fallback_time": "Überbrückungszeit in Minuten (für diese Zeit werden die letzten Ergebnisse angezeigt, wenn die API nicht erreichbar ist)"
+        },
+        "sections": {
+          "endpoint_checks": {
+            "name": "Endpunkt-Prüfungen",
+            "data": {
+              "check_reachable": "Prüfen, ob der Endpunkt erreichbar ist",
+              "allow_shared_endpoint": "Mehrere Hubs für diesen Endpunkt erlauben"
+            },
+            "description": "Wird nur verwendet, wenn der Endpunkt geändert wird."
+          }
         }
       }
+    },
+    "error": {
+      "endpoint_in_use": "Ein anderer Hub nutzt diesen API-Endpunkt bereits. Um ihn trotzdem zu verwenden, erlaube unter „Endpunkt-Prüfungen“ mehrere Hubs für diesen Endpunkt.",
+      "cannot_connect": "Die API ist nicht erreichbar. Prüfe die URL des API-Endpunkts oder schalte die Erreichbarkeitsprüfung unter „Endpunkt-Prüfungen“ aus."
     }
   },
   "issues": {
