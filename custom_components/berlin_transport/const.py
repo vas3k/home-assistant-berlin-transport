@@ -49,6 +49,9 @@ YAML_DOCS_URL = (
     "#-yaml-configuration-legacy"
 )
 
+# Repair issue raised while the API does not know the stop id of a stop.
+ISSUE_STOP_NOT_FOUND = "stop_not_found"
+
 CONF_TYPE_SUBURBAN = "suburban"
 CONF_TYPE_SUBWAY = "subway"
 CONF_TYPE_TRAM = "tram"

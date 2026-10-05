@@ -18,7 +18,12 @@ from homeassistant.helpers.entity_platform import (
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import dt as dt_util
 
-from .api import TransportApi, TransportConfigEntry, async_create_api
+from .api import (
+    StopNotFoundError,
+    TransportApi,
+    TransportConfigEntry,
+    async_create_api,
+)
 from .const import (
     CONF_API_MAX_RESULTS,
     CONF_DEPARTURES,
@@ -46,6 +51,7 @@ from .const import (
     DEFAULT_ICON,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
+    ISSUE_STOP_NOT_FOUND,
     ISSUE_YAML_CSV_LISTS,
     SUBENTRY_TYPE_STOP,
     YAML_DOCS_URL,
@@ -222,6 +228,7 @@ class TransportSensor(SensorEntity):
                 name=name,
                 entry_type=DeviceEntryType.SERVICE,
             )
+        self._issue_id = f"{ISSUE_STOP_NOT_FOUND}_{self._attr_unique_id}"
 
     @property
     def icon(self) -> str:
@@ -289,9 +296,26 @@ class TransportSensor(SensorEntity):
         if direction is not None:
             params["direction"] = direction
 
-        departures = await self.api.departures(self.stop_id, params)
+        try:
+            departures = await self.api.departures(self.stop_id, params)
+        except StopNotFoundError:
+            # Retrying won't help, the stop id needs fixing.
+            ir.async_create_issue(
+                self.hass,
+                DOMAIN,
+                self._issue_id,
+                is_fixable=False,
+                severity=ir.IssueSeverity.ERROR,
+                translation_key=ISSUE_STOP_NOT_FOUND,
+                translation_placeholders={
+                    "name": self.sensor_name or str(self.stop_id),
+                    "stop_id": str(self.stop_id),
+                },
+            )
+            return None
         if departures is None:
             return None
+        ir.async_delete_issue(self.hass, DOMAIN, self._issue_id)
 
         if "departures" not in departures:
             _LOGGER.warning(f"No departures found for {self.stop_id}")
@@ -323,6 +347,9 @@ class TransportSensor(SensorEntity):
         deduplicated_departures = set(departures)
 
         return sorted(deduplicated_departures, key=lambda d: d.timestamp)
+
+    async def async_will_remove_from_hass(self) -> None:
+        ir.async_delete_issue(self.hass, DOMAIN, self._issue_id)
 
     def next_departure(self) -> Departure | None:
         if self.departures and isinstance(self.departures, list):
