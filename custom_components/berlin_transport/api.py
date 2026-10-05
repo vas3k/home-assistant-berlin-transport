@@ -27,10 +27,12 @@ class TransportApi:
         self.session = session
         self.endpoint = endpoint
         self.headers = {"User-Agent": user_agent}
-        # Whether the last request failed. Every stop of a hub shares this
+        # The paths whose last request failed. Every stop of a hub shares this
         # client and polls every 90 seconds, so an outage is only logged once
-        # per client instead of once per stop and poll.
-        self._failing = False
+        # per client instead of once per stop and poll. The API only counts as
+        # working again once all of them succeed: a single stop that keeps
+        # failing would otherwise flip it back and forth on every poll.
+        self._failing_paths: set[str] = set()
 
     async def _get(
         self,
@@ -57,18 +59,20 @@ class TransportApi:
             _LOGGER.error(f"Unexpected error for {path}: {ex}")
             return None
 
-        if self._failing:
-            self._failing = False
-            _LOGGER.info("The API at %s works again", self.endpoint)
+        if path in self._failing_paths:
+            self._failing_paths.discard(path)
+            if not self._failing_paths:
+                _LOGGER.info("The API at %s works again", self.endpoint)
         return result
 
     def _log_failure(self, path: str, reason: object) -> None:
         """Log the first failed request as a warning, the ones after it as debug."""
-        if self._failing:
+        if self._failing_paths:
+            self._failing_paths.add(path)
             _LOGGER.debug("API request to %s%s failed: %s", self.endpoint, path, reason)
             return
 
-        self._failing = True
+        self._failing_paths.add(path)
         _LOGGER.warning(
             (
                 "API request to %s%s failed: %s. Further errors are logged at "
