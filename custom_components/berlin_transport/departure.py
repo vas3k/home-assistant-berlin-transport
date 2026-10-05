@@ -35,7 +35,7 @@ class Departure:
     """Departure dataclass to store data from API:
     https://v6.vbb.transport.rest/api.html#get-stopsiddepartures"""
 
-    trip_id: str
+    trip_id: str | None
     line_name: str
     line_type: str
     timestamp: datetime
@@ -52,6 +52,8 @@ class Departure:
     planned_platform: str | None = None
     stop_id: str | None = None
     stop_name: str | None = None
+    # As sent by the API, only used in `key`.
+    planned_when: str | None = None
 
     @classmethod
     def from_dict(cls, source: dict[str, Any]) -> "Departure":
@@ -83,7 +85,7 @@ class Departure:
         stop = source.get("stop") or {}
 
         return cls(
-            trip_id=source.get("tripId") or "unknown",
+            trip_id=source.get("tripId"),
             line_name=line.get("name"),  # type: ignore
             line_type=line_type,
             timestamp=timestamp,
@@ -105,6 +107,19 @@ class Departure:
             planned_platform=source.get("plannedPlatform"),
             stop_id=stop.get("id"),
             stop_name=stop.get("name"),
+            planned_when=source.get("plannedWhen"),
+        )
+
+    @property
+    def key(self) -> tuple[str | None, ...]:
+        """Identifies the departure across requests, unlike its delay or
+        position, which can change between them."""
+        return (
+            self.trip_id,
+            self.line_name,
+            self.direction,
+            self.stop_id,
+            self.planned_when,
         )
 
     @cached_property
@@ -146,21 +161,3 @@ class Departure:
             "planned_platform": self.planned_platform,
             "other_stop_name": other_stop_name,
         }
-
-    # Make the object hashable and use all infos that can be displayed in the
-    # frontend
-    def __hash__(self) -> int:
-        # The value of colors and walking time doesn't matter, it just needs to
-        # be the same for all evaluations of this function
-        d = self.to_dict(show_api_line_colors=False, walking_time=0)
-        # Copy to a normal dictionary, so we don't have type errors when
-        # exchanging warnings with a hashable tuple instead of a dict
-        hashable = dict(d)
-        # Warnings are dicts (not hashable), replace with a sorted tuple of IDs
-        hashable["warnings"] = (
-            tuple(sorted(w["id"] for w in d["warnings"])) if d["warnings"] else None
-        )
-        # Dictionaries are not hashable, so use the items, sort them for
-        # reproducibility. Convert it to a tuple, since lists are also not
-        # hashable
-        return hash(tuple(sorted(hashable.items())))
