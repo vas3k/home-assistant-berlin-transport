@@ -589,10 +589,15 @@ class StopSubentryFlowHandler(config_entries.ConfigSubentryFlow):
         data = {**user_input, **self._stop_list_data()}
         if reconfiguring:
             subentry = self._get_reconfigure_subentry()
+            updated = {**subentry.data, **data}
+            # A cleared duration is left out of the input, not sent empty, so
+            # drop the stored one too.
+            if CONF_DEPARTURES_DURATION not in user_input:
+                updated.pop(CONF_DEPARTURES_DURATION, None)
             return self.async_update_and_abort(
                 self._get_entry(),
                 subentry,
-                data={**subentry.data, **data},
+                data=updated,
             )
 
         data[CONF_DEPARTURES_STOP_ID] = self.data[CONF_DEPARTURES_STOP_ID]
