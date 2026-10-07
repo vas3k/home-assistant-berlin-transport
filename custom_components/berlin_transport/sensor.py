@@ -16,6 +16,7 @@ from homeassistant.helpers.entity_platform import (
     AddEntitiesCallback,
 )
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+from homeassistant.util import dt as dt_util
 
 from .api import TransportApi, TransportConfigEntry, async_create_api
 from .const import (
@@ -249,7 +250,7 @@ class TransportSensor(SensorEntity):
 
     async def async_update(self) -> None:
         departures = await self.fetch_departures()
-        current_time = datetime.now().astimezone()
+        current_time = dt_util.now()
         if departures is None:
             if (
                 self.departures
@@ -257,9 +258,7 @@ class TransportSensor(SensorEntity):
                 and (current_time - self.last_update_success) <= self.fallback_time
             ):
                 self.departures = [
-                    d
-                    for d in self.departures
-                    if d.timestamp >= datetime.now().astimezone()
+                    d for d in self.departures if d.timestamp >= current_time
                 ]
                 if not self.departures:
                     self._attr_available = False
@@ -275,9 +274,7 @@ class TransportSensor(SensorEntity):
         self, direction: str | None
     ) -> list[Departure] | None:
         params: dict[str, Any] = {
-            "when": (
-                datetime.now().astimezone() + timedelta(minutes=self.walking_time)
-            ).isoformat(),
+            "when": (dt_util.now() + timedelta(minutes=self.walking_time)).isoformat(),
             "results": self.api_max_results,
             "suburban": str(self.config.get(CONF_TYPE_SUBURBAN) or False).lower(),
             "subway": str(self.config.get(CONF_TYPE_SUBWAY) or False).lower(),

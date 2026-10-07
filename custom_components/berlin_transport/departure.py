@@ -3,6 +3,8 @@ from datetime import datetime
 from functools import cached_property
 from typing import Any, TypedDict
 
+from homeassistant.util import dt as dt_util
+
 from .const import DEFAULT_ICON, TRANSPORT_TYPE_VISUALS
 
 
@@ -57,14 +59,16 @@ class Departure:
         line_type: str = line.get("product")  # type: ignore
         line_visuals = TRANSPORT_TYPE_VISUALS.get(line_type) or {}
         when = source.get("when") or source.get("plannedWhen")
+        # Use Home Assistant's time zone, not the one of the Python process,
+        # which is UTC in containers without `TZ` set.
         if when is None:
             # Fallback if no time is provided
-            timestamp = datetime.now().astimezone()
+            timestamp = dt_util.now()
         else:
             try:
-                timestamp = datetime.fromisoformat(when).astimezone()
+                timestamp = dt_util.as_local(datetime.fromisoformat(when))
             except ValueError:
-                timestamp = datetime.now().astimezone()
+                timestamp = dt_util.now()
 
         current_trip_position = source.get("currentTripPosition") or {}
         latitude = current_trip_position.get("latitude")
