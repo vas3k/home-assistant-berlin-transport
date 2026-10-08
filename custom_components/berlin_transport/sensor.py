@@ -319,10 +319,17 @@ class TransportSensor(SensorEntity):
 
         # Get rid of duplicates
         # Duplicates should only exist for the Ringbahn and filtering for both
-        # directions
-        deduplicated_departures = set(departures)
+        # directions. The requests are made one after the other, so the delay
+        # or position of a departure can change in between: match on the trip
+        # and its planned time instead of on every field, and keep the first.
+        deduplicated_departures: dict[Any, Departure] = {}
+        for departure in departures:
+            key: Any = departure
+            if departure.trip_id != "unknown":
+                key = (departure.trip_id, departure.stop_id, departure.planned_when)
+            deduplicated_departures.setdefault(key, departure)
 
-        return sorted(deduplicated_departures, key=lambda d: d.timestamp)
+        return sorted(deduplicated_departures.values(), key=lambda d: d.timestamp)
 
     def next_departure(self) -> Departure | None:
         if self.departures and isinstance(self.departures, list):

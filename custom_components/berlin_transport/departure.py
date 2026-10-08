@@ -52,6 +52,8 @@ class Departure:
     planned_platform: str | None = None
     stop_id: str | None = None
     stop_name: str | None = None
+    # As sent by the API, only used to tell departures apart.
+    planned_when: str | None = None
 
     @classmethod
     def from_dict(cls, source: dict[str, Any]) -> "Departure":
@@ -105,6 +107,7 @@ class Departure:
             planned_platform=source.get("plannedPlatform"),
             stop_id=stop.get("id"),
             stop_name=stop.get("name"),
+            planned_when=source.get("plannedWhen"),
         )
 
     @cached_property
