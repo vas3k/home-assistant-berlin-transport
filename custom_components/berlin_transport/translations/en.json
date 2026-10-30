@@ -147,6 +147,10 @@
     "yaml_comma_separated_lists": {
       "title": "Comma-separated lists in the YAML configuration",
       "description": "The YAML configuration of {stops} still sets {options} as a comma-separated string. These options now take a list of values, and support for the comma-separated form will be removed in a future release.\n\nEdit `configuration.yaml` and write each value as its own list item, e.g.:\n\n```yaml\nsensor:\n  - platform: berlin_transport\n    departures:\n      - name: \"S+U Schönhauser Allee\"\n        stop_id: 900110001\n        excluded_lines:\n          - S41\n          - S42\n```\n\nRestart Home Assistant afterwards. This notice does not come back once no stop uses the old form."
+    },
+    "stop_not_found": {
+      "title": "Unknown stop {name}",
+      "description": "The API no longer knows the stop ID {stop_id} of {name}, so its departures cannot be shown. This can happen when the stop has been renamed, moved or merged into another one.\n\nRemove the stop and add it again, so it gets its current ID. For a stop set up in `configuration.yaml`, update its `stop_id` there and restart Home Assistant.\n\nThis notice goes away once departures for the stop can be fetched again."
     }
   }
 }

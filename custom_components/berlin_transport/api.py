@@ -17,6 +17,10 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 
+class StopNotFoundError(Exception):
+    """The API does not know the requested stop, e.g. after its id changed."""
+
+
 class TransportApi:
     def __init__(
         self,
@@ -45,8 +49,18 @@ class TransportApi:
                     params=params,
                     headers=self.headers,
                 )
+                # The API works, it just does not know this stop.
+                if (
+                    response.status == 404
+                    and response.content_type == "application/json"
+                    and (await response.json()).get("code") == "NOT_FOUND"
+                ):
+                    raise StopNotFoundError(path)
                 response.raise_for_status()
                 result = await response.json()
+        except StopNotFoundError:
+            # Not an error of the API, so keep it from the handlers below.
+            raise
         except TimeoutError:
             self._log_failure(path, f"no answer within {timeout} seconds")
             return None
@@ -91,12 +105,16 @@ class TransportApi:
     async def stop(
         self, stop_id: str, params: Mapping[str, Any]
     ) -> dict[str, Any] | None:
-        result: dict[str, Any] | None = await self._get(f"/stops/{stop_id}", params)
+        try:
+            result: dict[str, Any] | None = await self._get(f"/stops/{stop_id}", params)
+        except StopNotFoundError:
+            return None
         return result
 
     async def departures(
         self, stop_id: int, params: Mapping[str, Any]
     ) -> dict[str, Any] | None:
+        """Departures of a stop, raises `StopNotFoundError` for an unknown stop."""
         result: dict[str, Any] | None = await self._get(
             f"/stops/{stop_id}/departures", params
         )

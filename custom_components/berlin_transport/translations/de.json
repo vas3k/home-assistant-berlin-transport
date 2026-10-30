@@ -147,6 +147,10 @@
     "yaml_comma_separated_lists": {
       "title": "Kommagetrennte Listen in der YAML-Konfiguration",
       "description": "In der YAML-Konfiguration von {stops} ist {options} noch über Kommata getrennt angegeben. Diese Optionen erwarten jetzt eine Liste von Werten, die kommagetrennte Schreibweise wird in einer künftigen Version entfernt werden.\n\nTrage in der `configuration.yaml` jeden Wert als eigenen Listeneintrag ein, z. B.:\n\n```yaml\nsensor:\n  - platform: berlin_transport\n    departures:\n      - name: \"S+U Schönhauser Allee\"\n        stop_id: 900110001\n        excluded_lines:\n          - S41\n          - S42\n```\n\nStarte Home Assistant anschließend neu. Der Hinweis erscheint nicht mehr, sobald keine Haltestelle das alte Format verwendet."
+    },
+    "stop_not_found": {
+      "title": "Unbekannte Haltestelle {name}",
+      "description": "Die API kennt die Haltestellen-ID {stop_id} von {name} nicht mehr, daher können ihre Abfahrten nicht angezeigt werden. Das kann passieren, wenn die Haltestelle umbenannt, verlegt oder mit einer anderen zusammengelegt wurde.\n\nEntferne die Haltestelle und füge sie erneut hinzu, damit sie ihre aktuelle ID erhält. Bei einer Haltestelle aus der `configuration.yaml` ändere dort ihre `stop_id` und starte Home Assistant neu.\n\nDieser Hinweis verschwindet, sobald wieder Abfahrten für die Haltestelle abgerufen werden können."
     }
   }
 }
